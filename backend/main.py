@@ -1,5 +1,6 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import requests
 import shutil
@@ -72,11 +73,12 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 passwordless_client = PasswordlessClientBuilder(PasswordlessOptions(settings.passwordless_dev_secret)).build()
 inditex_token = InditexToken(settings.inditex_token_url, settings.inditex_client_id, settings.inditex_client_password)
 
@@ -94,10 +96,12 @@ async def create_user(user_alias: str) -> Any:
         username=user_alias,
         aliases=[user_alias]
     )
-
-    response: RegisteredToken = passwordless_client.register_token(register_token)
-
-    return response.token
+    
+    try:
+        response: RegisteredToken = passwordless_client.register_token(register_token)
+        return response.token
+    except Exception as e:
+        return JSONResponse({"error": "Alias xa rexistrado."}, status_code=409)
 
 @app.get("/users")
 async def get_users() -> list[User]:
@@ -186,43 +190,52 @@ async def search_clothing(query: str, brand: str = "") -> list[Reference]:
 
     return references
         
-@app.post("/clothing:image_search")
-async def search_clothing_by_image(user_id: str, file: UploadFile = File(...)) -> list[Reference]:
-    token = inditex_token.get_token()
+# @app.post("/clothing:image_search")
+# async def search_clothing_by_image(user_id: str = Form(...), file: UploadFile = File(...)) -> list[Reference]:
+#     token = inditex_token.get_token()
 
-    Path(f"{settings.pictures_dir}/{user_id}").mkdir(parents=True, exist_ok=True)
-    with open(f"{settings.pictures_dir}/{user_id}/uploaded_image.png", "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+#     Path(f"{settings.pictures_dir}/{user_id}").mkdir(parents=True, exist_ok=True)
 
-    image_url = ""
+#     image_id = str(uuid.uuid4())
+#     image_path = user_folder / f"{image_id}.jpg"
 
-    params = {
-        "image": image_url,
-    }
+#     # TODO: Convert image to JPG if necessary
 
-    headers = {
-        'User-Agent': "PostmanRuntime/7.43.0",
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
-    }
+#     # Save the uploaded file
+#     with image_path.open("wb") as buffer:
+#         shutil.copyfileobj(file.file, buffer)
 
-    response = requests.get(settings.inditex_image_search_url, params=params, headers=headers)
+#     # Generate the image URL
+#     image_url = f"http://0.0.0.0:8000/pictures/{user_id}/{image_id}.jpg"
 
-    references = []
+#     return [image_url]
+#     params = {
+#         "image": image_url,
+#     }
 
-    for r in response.json():
-        ref = {
-            "name": r["name"], 
-            "link": r["link"], 
-            "current_price" : r["price"]["value"]["current"],
-            "original_price" : r["price"]["value"]["original"],
-            "brand": r["brand"],
-            }
-        references.append(ref)
+#     headers = {
+#         'User-Agent': "PostmanRuntime/7.43.0",
+#         "Authorization": f"Bearer {token}",
+#         "Content-Type": "application/json"
+#     }
 
-    return references
+#     response = requests.get(settings.inditex_image_search_url, params=params, headers=headers)
 
-@app.get("/pictures/{user_id}/{picture_id}")
-async def get_picture(user_id: str, picture_id: str) -> dict[str, str]:
-    return {"message": "Hello World"}
+#     references = []
+
+#     for r in response.json():
+#         ref = {
+#             "name": r["name"], 
+#             "link": r["link"], 
+#             "current_price" : r["price"]["value"]["current"],
+#             "original_price" : r["price"]["value"]["original"],
+#             "brand": r["brand"],
+#             }
+#         references.append(ref)
+
+#     return references
+
+# @app.get("/pictures/{user_id}/{picture_id}")
+# async def get_picture(user_id: str, picture_id: str) -> dict[str, str]:
+#     return FileResponse(f"pictures/{user_id}/{picture_id}.jpg", media_type="image/png")
 
