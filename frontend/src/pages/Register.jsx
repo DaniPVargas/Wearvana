@@ -1,24 +1,29 @@
-import { useContext, useEffect, useRef, useState } from "react";
-import * as Passwordless from "@passwordlessdev/passwordless-client";
-import authContext from "../context/AuthProvider";
-import AuthClient from "../services/AuthClient";
+import { useContext, useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import AuthContext from "../context/AuthProvider";
+import AuthClient from "../services/AuthClient";
+import * as Passwordless from "@passwordlessdev/passwordless-client";
 
-export default function RegisterPage() {
-  const aliasRef = useRef();
+const PASSWORDLESS_API_KEY = "wearvana:public:a72fe9ba831b4292808084b49406b3d3";
+const PASSWORDLESS_API_URL = "https://v4.passwordless.dev";
+
+export default function Register() {
+  const nameRef = useRef(null);
   const [alias, setAlias] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [description, setDescription] = useState("");
   const [errMsg, setErrMsg] = useState("");
-  const { setAuth } = useContext(authContext);
+  const { setAuth, setUserAlias } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const PASSWORDLESS_API_KEY =
-    "wearvana:public:a72fe9ba831b4292808084b49406b3d3";
-  const PASSWORDLESS_API_URL = "https://v4.passwordless.dev";
+  const isFormValid = alias.trim() && fullName.trim() && description.trim();
 
+  // Focus on the alias input when the component mounts
   useEffect(() => {
-    aliasRef.current.focus();
+    nameRef.current.focus();
   }, []);
 
+  // Clean up the error message when the user changes the alias
   useEffect(() => {
     setErrMsg("");
   }, [alias]);
@@ -35,7 +40,6 @@ export default function RegisterPage() {
     }
 
     if (registerToken) {
-
       const p = new Passwordless.Client({
         apiKey: PASSWORDLESS_API_KEY,
         apiUrl: PASSWORDLESS_API_URL,
@@ -48,6 +52,10 @@ export default function RegisterPage() {
         const verifiedToken = await authClientInstance.signIn(token);
         localStorage.setItem("jwt", verifiedToken.jwt);
         setAuth({ verifiedToken });
+        setUserAlias(alias);
+
+        // Send the user data to backend
+
         navigate("/");
       } else {
         setErrMsg(error);
@@ -56,49 +64,66 @@ export default function RegisterPage() {
   };
 
   return (
-    <>
-      <div className="max-w-md px-5 mx-auto flex items-center justify-center min-h-screen bg-ig-primary">
-        <section className="w-full p-6 bg-white rounded-lg shadow-lg">
-          <img
-            src="/logo.svg"
-            alt="Logo"
-            className="mx-auto mb-16 w-24 h-24 "
+    <div className="max-w-md px-5 mx-auto flex items-center justify-center min-h-screen bg-ig-primary">
+      <section className="w-full p-6 bg-white rounded-lg shadow-lg">
+        <img src="/logo.svg" alt="Logo" className="mx-auto mb-16 w-24 h-24" />
+        <div className="mb-4">
+          <input
+            type="text"
+            id="fullName"
+            ref={nameRef}
+            autoComplete="off"
+            onChange={(e) => setFullName(e.target.value)}
+            value={fullName}
+            required
+            placeholder="Nombre completo"
+            className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
           />
-          <div className="mb-4">
-            <input
-              type="text"
-              id="alias"
-              ref={aliasRef}
-              autoComplete="off"
-              onChange={(e) => setAlias(e.target.value)}
-              value={alias}
-              required
-              placeholder="alias"
-              className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <button
-            onClick={handleSubmit}
-            className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
+        </div>
+        <div className="mb-4">
+          <input
+            type="text"
+            id="alias"
+            autoComplete="off"
+            onChange={(e) => setAlias(e.target.value)}
+            value={alias}
+            required
+            placeholder="Alias"
+            className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div className="mb-4">
+          <textarea
+            id="description"
+            onChange={(e) => setDescription(e.target.value)}
+            value={description}
+            required
+            placeholder="Descripción"
+            className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <button
+          onClick={handleSubmit}
+          className="wearvana-button w-full flex items-center justify-center gap-2 py-3 disabled:opacity-50"
+          disabled={!isFormValid}
+        >
+          Crea unha conta
+        </button>
+        <p className="mt-4 text-center text-sm text-gray-500">
+          Xa estás rexistrado?{" "}
+          <Link to="/login" className="hover:underline text-wearvana-accent">
+            Inicia sesión
+          </Link>
+        </p>
+        {errMsg && (
+          <p
+            className="text-center text-red-500 text-sm mt-2"
+            aria-live="assertive"
           >
-            Crea unha conta
-          </button>
-          <p className="mt-4 text-center text-sm text-gray-500">
-            Xa estás rexistrado?{" "}
-            <Link to="/login" className="hover:underline text-wearvana-accent">
-              Inicia sesión
-            </Link>
+            {errMsg}
           </p>
-          {errMsg && (
-            <p
-              className="text-center text-red-500 text-sm mt-2"
-              aria-live="assertive"
-            >
-              {errMsg}
-            </p>
-          )}
-        </section>
-      </div>
-    </>
+        )}
+      </section>
+    </div>
   );
 }

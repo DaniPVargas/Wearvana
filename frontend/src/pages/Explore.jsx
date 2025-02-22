@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import {
   Search,
   Upload,
@@ -13,6 +13,7 @@ import {
 import Skeleton from "../components/Skeleton";
 import TypewriterPlaceholder from "../components/TypewriterPlaceholder";
 import AuthClient from "../services/AuthClient";
+import AuthContext from "../context/AuthProvider";
 
 function ProductCard({
   image,
@@ -139,6 +140,7 @@ export default function Explore() {
   const canvasRef = useRef(null);
   const [showPreviewOptions, setShowPreviewOptions] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
+  const { userAlias } = useContext(AuthContext);
 
   // Fixed dimensions for the photo
   const width = 720;
@@ -216,11 +218,16 @@ export default function Explore() {
     setIsLoading(true);
     setHasSearched(true);
 
-    // Simulate API delay
-    setTimeout(() => {
+    const authClientInstance = new AuthClient();
+
+    try {
+      const data = await authClientInstance.imageSearch(file, userAlias);
+    } catch (error) {
+      console.log(error);
+    } finally {
       setSearchResults(MOCK_IMAGE_SEARCH_RESULTS);
       setIsLoading(false);
-    }, 1500);
+    }
 
     // Comment out the actual API call for now
     /*

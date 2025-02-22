@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Upload, Camera, Image, X, Plus, Link as LinkIcon, Send } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import ImageCaptureService from '../services/ImageCaptureService';
+import { Camera, Image, X, Plus, Link as LinkIcon, Send } from 'lucide-react';
 
 export default function UploadModal({ isOpen, onClose }) {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -176,24 +174,6 @@ export default function UploadModal({ isOpen, onClose }) {
     setProductTags([]);
     stopCamera();
     onClose();
-  };
-
-  const handleProductImageCapture = async (e) => {
-    e.preventDefault();
-    if (!productUrl) return;
-
-    setIsCapturingProduct(true);
-    try {
-      const file = await ImageCaptureService.captureProductImage(productUrl);
-      setSelectedImage(file);
-      setPreviewUrl(URL.createObjectURL(file));
-      setProductUrl('');
-    } catch (error) {
-      console.error('Error capturing product image:', error);
-      alert('Error al capturar la imagen del producto. Por favor, inténtalo de nuevo.');
-    } finally {
-      setIsCapturingProduct(false);
-    }
   };
 
   if (!isOpen) return null;
