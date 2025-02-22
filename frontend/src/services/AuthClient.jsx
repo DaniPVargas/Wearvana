@@ -24,17 +24,19 @@ export default class AuthClient {
     }
   }
 
-  async register(alias) {
+  async register(alias, description, profilePictureUrl) {
     try {
-      const response = await fetch(
-        `${this.apiBaseUrl}/users?user_alias=${alias}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await fetch(`${this.apiBaseUrl}/users`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_alias: alias,
+          description: description,
+          profile_picture_url: profilePictureUrl,
+        }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
