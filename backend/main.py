@@ -221,7 +221,7 @@ async def search_clothing_by_image(user_id: str = Form(...), file: UploadFile = 
         "Content-Type": "application/json",
     }
 
-    response =  requests.get(f"{settings.inditex_image_search_url}?image={params["image"]}", headers=headers)
+    response =  requests.get(f"{settings.inditex_image_search_url}?image={params['image']}", headers=headers)
     response.raise_for_status()
 
     print(params)
