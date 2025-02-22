@@ -182,7 +182,7 @@ def get_users() -> list[User]:
     users = cursor.fetchall()
     conn.close()
 
-    return [{"user_id": user[0], "user_alias": user[1], "description": user[2], "profile_picture": user[3]} for user in users]
+    return [{"user_id": user[0], "user_alias": user[1], "description": user[2], "profile_picture_url": user[3]} for user in users]
 
 
 @app.get("/users/{user_id}")

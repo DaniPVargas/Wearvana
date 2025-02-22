@@ -26,7 +26,7 @@ class User(BaseModel):
     user_id: str
     user_alias: str
     description: str
-    profile_picture_url: str
+    profile_picture_url: Optional[str] = None
 
 class AuthBody(BaseModel):
     token: str
