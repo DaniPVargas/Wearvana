@@ -4,49 +4,47 @@ export default class AuthClient {
   }
 
   async signIn(token) {
-    try {
-      const response = await fetch(`${this.apiBaseUrl}/auth`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ token }),
-      });
+    const response = await fetch(`${this.apiBaseUrl}/auth`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ token }),
+    });
 
-      if (!response.ok) {
-        throw new Error("Erro ao iniciar sesión");
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Erro ao iniciar sesión", error);
-      throw error;
-    }
+    if (!response.ok) throw new Error("Erro ao iniciar sesión");
+    return await response.json();
   }
 
   async register(alias, description, profilePictureUrl) {
-    try {
-      const response = await fetch(`${this.apiBaseUrl}/users`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          user_alias: alias,
-          description: description,
-          profile_picture_url: profilePictureUrl,
-        }),
-      });
+    const response = await fetch(`${this.apiBaseUrl}/users`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        user_alias: alias,
+        description: description,
+        profile_picture_url: profilePictureUrl,
+      }),
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Erro ao rexistrar o usuario");
-      }
+    if (!response.ok)
+      throw new Error((await response.json()) || "Erro ao rexistrar o usuario");
 
-      return await response.json();
-    } catch (error) {
-      throw error;
-    }
+    return await response.json();
+  }
+
+  async getUser(userID) {
+    const response = await fetch(`${this.apiBaseUrl}/users/${userID}`);
+    if (!response.ok) throw new Error("Erro ao obter o usuario");
+    return await response.json();
+  }
+
+  async getUserPosts(userID) {
+    const response = await fetch(`${this.apiBaseUrl}/users/${userID}/posts`);
+    if (!response.ok) throw new Error("Erro ao obter os posts do usuario");
+    return await response.json();
   }
 
   async textSearch(query, brand) {
@@ -61,10 +59,7 @@ export default class AuthClient {
       },
     });
 
-    if (!response.ok) {
-      throw new Error("Non se puideron obter resultados");
-    }
-
+    if (!response.ok) throw new Error("Non se puideron obter resultados");
     return await response.json();
   }
 
@@ -72,9 +67,8 @@ export default class AuthClient {
     const formData = new FormData();
     formData.append("file", image);
 
-    if (!userID) 
+    if (!userID)
       throw new Error("O ID do usuario é necesario para subir a imaxe");
-    
 
     // First upload the image to the server
     const uploadResponse = await fetch(
@@ -85,16 +79,13 @@ export default class AuthClient {
       }
     );
 
-    if (!uploadResponse.ok) {
-      throw new Error("Erro ao subir a imaxe");
-    } 
+    if (!uploadResponse.ok) throw new Error("Erro ao subir a imaxe");
 
-      const searchResult = await searchResponse.json();
-      const imageUrl = searchResult.image_url;
-      console.log("Image URL", imageUrl);
+    const searchResult = await searchResponse.json();
+    const imageUrl = searchResult.image_url;
+    console.log("Image URL", imageUrl);
 
     return imageUrl;
-
   }
 
   async imageSearch(image, userID) {
