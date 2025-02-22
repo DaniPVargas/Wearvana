@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -7,13 +7,11 @@ import shutil
 import sqlite3
 import uuid
 from pathlib import Path
-from bs4 import BeautifulSoup
 from typing import Any
 from datetime import datetime, timedelta
 import aiohttp
 
 from passwordless import (
-    PasswordlessClient,
     PasswordlessClientBuilder,
     PasswordlessOptions,
     RegisterToken,
@@ -79,20 +77,86 @@ app.add_middleware(
 passwordless_client = PasswordlessClientBuilder(PasswordlessOptions(settings.passwordless_dev_secret)).build()
 inditex_token = InditexToken(settings.inditex_token_url, settings.inditex_client_id, settings.inditex_client_password)
 
+def init_db():
+    conn = sqlite3.connect(settings.db_file)
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY,
+            name TEXT UNIQUE NOT NULL,
+            description TEXT,
+            profile_picture_url TEXT
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS posts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            image_url TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS relationships (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            follower_id INTEGER NOT NULL,
+            followed_id INTEGER NOT NULL,
+            FOREIGN KEY (follower_id) REFERENCES users(id),
+            FOREIGN KEY (followed_id) REFERENCES users(id)
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS tags (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            post_id INTEGER NOT NULL,
+            x_coord FLOAT NOT NULL,
+            y_coord FLOAT NOT NULL,
+            clothing_name TEXT NOT NULL,
+            current_price FLOAT NOT NULL,
+            original_price FLOAT,
+            brand TEXT NOT NULL,
+            link TEXT NOT NULL,
+            FOREIGN KEY (post_id) REFERENCES posts(id)
+        )
+    ''')
+
+    conn.commit()
+    conn.close()
+
+def get_db():
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row  # Permite acceder a los resultados como diccionarios
+    return conn
+
+# API requests
 
 @app.post("/auth")
-async def authenticate(body: AuthBody) -> VerifiedUser:
+def authenticate(body: AuthBody) -> VerifiedUser:
     verify_sign_in = VerifySignIn(body.token)
     return passwordless_client.sign_in(verify_sign_in)
 
 
 @app.post("/users")
-async def create_user(user_alias: str) -> Any:
+def create_user(user_alias: str, description: str, profile_picture_url: str) -> Any:
+    conn = get_db()
+    cursor = conn.cursor()
+
     user_id = str(uuid.uuid4())
 
-    
+    try:
+        cursor.execute(
+            "INSERT INTO users (id, name, description, profile_picture_url) VALUES (?, ?, ?, ?)",
+            (user_id, user_alias, description, profile_picture_url),
+        )
+        conn.commit()
+    except sqlite3.IntegrityError:
+        raise HTTPException(status_code=400, detail="Username already exists")
 
-    # TODO: Guardar en BDD usuario y datos
+    conn.close()
 
     register_token = RegisterToken(user_id=user_id, username=user_alias, aliases=[user_alias])
 
@@ -104,18 +168,56 @@ async def create_user(user_alias: str) -> Any:
 
 
 @app.get("/users")
-async def get_users() -> list[User]:
-    return {"message": settings.db_file}
+def get_users() -> list[User]:
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users")
+    users = cursor.fetchall()
+    conn.close()
+
+    return [dict(user) for user in users]
 
 
 @app.get("/users/{user_id}")
 async def get_user_info(user_id: str) -> User:
-    return {"message": "Hello World"}
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+    user = cursor.fetchone()
+    conn.close()
+
+    return user
 
 
 @app.get("/users/{user_id}/posts")
 async def get_user_posts(user_id: str) -> list[Post]:
-    return {"message": "Hello World"}
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM posts WHERE user_id = ? LEFT JOIN tags ON posts.id = tags.post_id", (user_id,))
+    posts = cursor.fetchall()
+
+    result = []
+    grouped_posts = {}
+    
+    for row in posts:
+        post_id = row["id"]
+        if post_id not in grouped_posts:
+            grouped_posts[post_id] = {
+                "id": post_id,
+                "title": row["title"],
+                "content": row["content"],
+                "tags": []
+            }
+        
+        if row["name"]:  # Si hay nombre de la etiqueta, la agregamos
+            grouped_posts[post_id]["tags"].append(row["name"])
+    
+    for post in grouped_posts.values():
+        result.append(post)
+        
+    conn.close()
+
+    return [dict(post) for post in posts]
 
 
 @app.get("/users/{user_id}/followed")
@@ -178,7 +280,7 @@ async def search_clothing(query: str, brand: str = "") -> list[Reference]:
             
             references = []
 
-            for r in response.json():
+            for r in response:
                 ref = {
                     "name": r["name"],
                     "link": r["link"],
