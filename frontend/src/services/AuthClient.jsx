@@ -35,6 +35,23 @@ export default class AuthClient {
     return await response.json();
   }
 
+  async updateUser(userID, description, profilePictureUrl) {
+    const response = await fetch(`${this.apiBaseUrl}/users/${userID}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        description: description,
+        profile_picture_url: profilePictureUrl,
+      }),
+    });
+
+    if (!response.ok) throw new Error("Erro ao actualizar o usuario");
+
+    return;
+  }
+
   async getUser(userID) {
     const response = await fetch(`${this.apiBaseUrl}/users/${userID}`);
     if (!response.ok) throw new Error("Erro ao obter o usuario");
@@ -72,7 +89,7 @@ export default class AuthClient {
 
     // First upload the image to the server
     const uploadResponse = await fetch(
-      `${this.apiBaseUrl}/${userID}/pictures`,
+      `${this.apiBaseUrl}/users/${userID}/pictures`,
       {
         method: "POST",
         body: formData,
@@ -81,11 +98,10 @@ export default class AuthClient {
 
     if (!uploadResponse.ok) throw new Error("Erro ao subir a imaxe");
 
-    const searchResult = await searchResponse.json();
-    const imageUrl = searchResult.image_url;
-    console.log("Image URL", imageUrl);
+    const searchResult = await uploadResponse.json();
+    console.log("Image URL", searchResult.image_url);
 
-    return imageUrl;
+    return searchResult.image_url;
   }
 
   async imageSearch(image, userID) {

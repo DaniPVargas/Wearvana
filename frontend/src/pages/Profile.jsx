@@ -1,24 +1,27 @@
-import { Settings, MapPin, Link as LinkIcon, X } from 'lucide-react';
-import { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import authContext from '../context/AuthProvider';
-import Skeleton from '../components/Skeleton';
+import { Settings, MapPin, Link as LinkIcon, X } from "lucide-react";
+import { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import AuthContext from "../context/AuthProvider";
+import AuthClient from "../services/AuthClient";
+import Skeleton from "../components/Skeleton";
 
 export default function Profile() {
   const navigate = useNavigate();
-  const { setAuth, setUserID } = useContext(authContext);
+  const { setAuth, userID, setUserID } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(true);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [user, setUser] = useState(null);
+  const [posts, setPosts] = useState([]);
 
   // Add scroll lock effect
   useEffect(() => {
     if (showSettingsModal) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     }
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, [showSettingsModal]);
 
@@ -30,28 +33,35 @@ export default function Profile() {
     return () => clearTimeout(timer);
   }, []);
 
-  // This would come from your auth/user context in a real app
-  const user = {
-    name: "John Doe",
-    username: "@johndoe",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
-    bio: "Fashion enthusiast | Sustainable clothing advocate",
-    location: "Madrid, España",
-    website: "wearvana.com/john",
-    stats: {
-      posts: 42,
-      followers: 1234,
-      following: 567
-    }
-  };
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const authClientInstance = new AuthClient();
+        const response = await authClientInstance.getUser(userID);
+        setUser(response);
+        console.log(response);
+
+        const postsResponse = await authClientInstance.getUserPosts(userID);
+        setPosts(postsResponse);
+        console.log(postsResponse);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    fetchUserData();
+  }, [userID]);
 
   // Mock data for the user's posts/items
-  const items = Array(9).fill(null).map((_, i) => ({
-    id: i,
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-HbpRL3prpms6Fn7t544TSccClzI2lb.png",
-    title: `Item ${i + 1}`,
-    price: Math.floor(Math.random() * 100) + 20
-  }));
+  const items = Array(9)
+    .fill(null)
+    .map((_, i) => ({
+      id: i,
+      image:
+        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-HbpRL3prpms6Fn7t544TSccClzI2lb.png",
+      title: `Item ${i + 1}`,
+      price: Math.floor(Math.random() * 100) + 20,
+    }));
 
   if (isLoading) {
     return (
@@ -117,7 +127,7 @@ export default function Profile() {
                 <p className="text-gray-600 text-lg">{user.username}</p>
               </div>
             </div>
-            <button 
+            <button
               onClick={() => setShowSettingsModal(true)}
               className="md:hidden wearvana-button flex items-center gap-2 self-start"
             >
@@ -136,7 +146,10 @@ export default function Profile() {
               </div>
               <div className="flex items-center gap-2">
                 <LinkIcon size={16} />
-                <a href={`https://${user.website}`} className="text-blue-600 hover:underline">
+                <a
+                  href={`https://${user.website}`}
+                  className="text-blue-600 hover:underline"
+                >
                   {user.website}
                 </a>
               </div>
@@ -185,7 +198,7 @@ export default function Profile() {
 
       {/* Settings Modal */}
       {showSettingsModal && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
@@ -196,7 +209,7 @@ export default function Profile() {
           <div className="bg-white w-full max-w-sm rounded-xl overflow-hidden">
             <div className="border-b border-gray-200 p-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Axustes</h2>
-              <button 
+              <button
                 onClick={() => setShowSettingsModal(false)}
                 className="text-gray-500 hover:text-gray-700"
               >
@@ -204,14 +217,14 @@ export default function Profile() {
               </button>
             </div>
             <div className="p-4">
-              <button 
+              <button
                 className="w-full flex items-center justify-center px-4 py-3 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
                 onClick={() => {
-                  localStorage.removeItem('jwt');
+                  localStorage.removeItem("jwt");
                   setAuth("");
                   setUserID("");
                   setShowSettingsModal(false);
-                  navigate('/login');
+                  navigate("/login");
                 }}
               >
                 <span>Pechar sesión</span>

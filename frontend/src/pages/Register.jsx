@@ -8,19 +8,18 @@ const PASSWORDLESS_API_KEY = "wearvana:public:a72fe9ba831b4292808084b49406b3d3";
 const PASSWORDLESS_API_URL = "https://v4.passwordless.dev";
 
 export default function Register() {
-  const nameRef = useRef(null);
+  const aliasRef = useRef(null);
   const [alias, setAlias] = useState("");
-  const [fullName, setFullName] = useState("");
   const [description, setDescription] = useState("");
   const [errMsg, setErrMsg] = useState("");
   const { setAuth, setUserID } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const isFormValid = alias.trim() && fullName.trim() && description.trim();
+  const isFormValid = alias.trim() && description.trim();
 
   // Focus on the alias input when the component mounts
   useEffect(() => {
-    nameRef.current.focus();
+    aliasRef.current.focus();
   }, []);
 
   // Clean up the error message when the user changes the alias
@@ -32,17 +31,16 @@ export default function Register() {
     let registerToken = null;
 
     // Load a random image as a file
-    const randomImage = Math.random() < 0.5 ? "/male.png" : "/female.png";
-    const response = await fetch(`/path/to/images/${randomImage}`);
+    const randomImage = Math.random() < 0.5 ? "male.png" : "female.png";
+    const response = await fetch(`/${randomImage}`);
     const imageBlob = await response.blob();
-    const imageFile = new File([imageBlob], randomImage, { type: imageBlob.type });
+    const imageFile = new File([imageBlob], randomImage, {
+      type: imageBlob.type,
+    });
 
     const authClientInstance = new AuthClient();
 
-    // Upload the image to the server
-    
     try {
-      // Register the alias with AuthClient
       registerToken = await authClientInstance.register(alias, description, "");
     } catch (error) {
       setErrMsg(error.message);
@@ -62,7 +60,23 @@ export default function Register() {
         setAuth(response.token_id);
         setUserID(response.user_id);
 
-        // Send the user data to backend
+        // Update user info to upload the image
+        try {
+          const imageUrl = await authClientInstance.uploadImage(
+            imageFile,
+            response.user_id
+          );
+          console.log("Image URL", imageUrl);
+          authClientInstance.updateUser(
+            response.user_id,
+            description,
+            imageUrl
+          );
+        } catch (error) {
+          setErrMsg(error.message);
+          console.log("Error uploading image or updating user", error);
+          // Show an advice in the UI
+        }
 
         navigate("/");
       } else {
@@ -78,20 +92,8 @@ export default function Register() {
         <div className="mb-4">
           <input
             type="text"
-            id="fullName"
-            ref={nameRef}
-            autoComplete="off"
-            onChange={(e) => setFullName(e.target.value)}
-            value={fullName}
-            required
-            placeholder="Nombre completo"
-            className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-        <div className="mb-4">
-          <input
-            type="text"
             id="alias"
+            ref={aliasRef}
             autoComplete="off"
             onChange={(e) => setAlias(e.target.value)}
             value={alias}
