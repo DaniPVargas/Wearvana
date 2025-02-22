@@ -27,3 +27,16 @@ class User(BaseModel):
 
 class AuthBody(BaseModel):
     token: str
+
+class CreateUserBody(BaseModel):
+    user_alias: str
+    description: str
+    profile_picture_url: str
+
+class FollowUserBody(BaseModel):
+    follower_id: str
+    followed_id: str
+
+class UploadPostBody(BaseModel):
+    user_id: str
+    post: Post

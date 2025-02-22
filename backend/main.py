@@ -60,24 +60,7 @@ class InditexToken:
         self.token = res["id_token"]
         self.expiry_date = datetime.now() + timedelta(seconds=res["expires_in"] - 600)
 
-
-origins = ["https://wearvana.netlify.app"]
-
-settings = Settings()
-app = FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-passwordless_client = PasswordlessClientBuilder(PasswordlessOptions(settings.passwordless_dev_secret)).build()
-inditex_token = InditexToken(settings.inditex_token_url, settings.inditex_client_id, settings.inditex_client_password)
-
-def init_db():
+def init_db(settings):
     conn = sqlite3.connect(settings.db_file)
     cursor = conn.cursor()
 
@@ -127,8 +110,26 @@ def init_db():
     conn.commit()
     conn.close()
 
+# origins = ["https://wearvana.netlify.app"]
+
+settings = Settings()
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+passwordless_client = PasswordlessClientBuilder(PasswordlessOptions(settings.passwordless_dev_secret)).build()
+inditex_token = InditexToken(settings.inditex_token_url, settings.inditex_client_id, settings.inditex_client_password)
+
+init_db(settings)
+
 def get_db():
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(settings.db_file)
     conn.row_factory = sqlite3.Row  # Permite acceder a los resultados como diccionarios
     return conn
 
@@ -141,11 +142,15 @@ def authenticate(body: AuthBody) -> VerifiedUser:
 
 
 @app.post("/users")
-def create_user(user_alias: str, description: str, profile_picture_url: str) -> Any:
+def create_user(create_user_body: CreateUserBody) -> Any:
     conn = get_db()
     cursor = conn.cursor()
 
     user_id = str(uuid.uuid4())
+
+    user_alias = create_user_body.alias
+    description = create_user_body.description
+    profile_picture_url = create_user_body.profile_picture_url
 
     try:
         cursor.execute(
@@ -158,7 +163,7 @@ def create_user(user_alias: str, description: str, profile_picture_url: str) -> 
 
     conn.close()
 
-    register_token = RegisterToken(user_id=user_id, username=user_alias, aliases=[user_alias])
+    register_token = RegisterToken(user_id=user_id, display_name=user_alias)
 
     try:
         response: RegisteredToken = passwordless_client.register_token(register_token)
@@ -193,27 +198,28 @@ async def get_user_info(user_id: str) -> User:
 async def get_user_posts(user_id: str) -> list[Post]:
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM posts WHERE user_id = ? LEFT JOIN tags ON posts.id = tags.post_id", (user_id,))
+    cursor.execute("SELECT * FROM posts WHERE user_id = ?", (user_id,))
     posts = cursor.fetchall()
 
-    result = []
-    grouped_posts = {}
+    posts_results = []
     
     for row in posts:
-        post_id = row["id"]
-        if post_id not in grouped_posts:
-            grouped_posts[post_id] = {
-                "id": post_id,
-                "title": row["title"],
-                "content": row["content"],
-                "tags": []
-            }
-        
-        if row["name"]:  # Si hay nombre de la etiqueta, la agregamos
-            grouped_posts[post_id]["tags"].append(row["name"])
-    
-    for post in grouped_posts.values():
-        result.append(post)
+        posts_results.append({"id": row["id"], "user_id": row["user_id"], "image_url": row["image_url"], "tags": []})
+
+        cursor.execute("SELECT * FROM tags WHERE post_id = ?", (row["id"],))
+        tags = cursor.fetchall()
+
+        for t in tags:
+            posts_results[-1]["tags"].append(
+                {"x_coord": t["x_coord"], 
+                 "y_coord": t["y_coord"], 
+                 "clothing_name": t["clothing_name"], 
+                 "current_price": t["current_price"], 
+                 "original_price" : t["original_price"],
+                 "brand": t["brand"], 
+                 "link": t["link"]
+                 }
+                )
         
     conn.close()
 
@@ -222,17 +228,38 @@ async def get_user_posts(user_id: str) -> list[Post]:
 
 @app.get("/users/{user_id}/followed")
 async def get_followed(user_id: str) -> list[str]:
-    return {"message": "Hello World"}
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT followed_id FROM relationships WHERE follower_id = ?", (user_id,))
+    followed = cursor.fetchall()
+    conn.close()
+
+    return [f["followed_id"] for f in followed]
 
 
 @app.get("/users/{user_id}/followers")
 async def get_followers(user_id: str) -> list[str]:
-    return {"message": "Hello World"}
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT follower_id FROM relationships WHERE followed_id = ?", (user_id,))
+    followed = cursor.fetchall()
+    conn.close()
+
+    return [f[0] for f in followed]
 
 
 @app.post("/users/{user_id}/followed")
-async def follow_user(user_id: str) -> dict[str, str]:
-    return {"message": "Hello World"}
+async def follow_user(follow_user_body: FollowUserBody) -> dict[str, str]:
+
+    user_id = follow_user_body.follower_id
+    followed_id = follow_user_body.followed_id
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO relationships (follower_id, followed_id) VALUES (?, ?)", (user_id, followed_id))
+    conn.commit()
+
+    return {"message": "User followed successfully"}
 
 
 @app.delete("/users/{user_id}/followed/{followed_id}")
@@ -246,18 +273,74 @@ async def delete_user(user_id: str) -> dict[str, str]:
 
 
 @app.post("/users/{user_id}/posts")
-async def create_post(user_id: str) -> dict[str, str]:
-    return {"message": "Hello World"}
+async def create_post(upload_post_body: UploadPostBody) -> dict[str, str]:
+    conn = get_db()
+    cursor = conn.cursor()
+
+    user_id = upload_post_body.user_id
+    image_url = upload_post_body.image_url
+    tags = upload_post_body.tags
+
+    cursor.execute("INSERT INTO posts (user_id, followed_id) VALUES (?, ?)", (user_id, ))
+
+    for t in tags:
+        post_id = cursor.lastrowid
+        x_coord = t.x_coord
+        y_coord = t.y_coord
+        clothing_name = t.clothing_name
+        current_price = t.current_price
+        original_price = t.original_price
+        brand = t.brand
+        link = t.link
+
+        cursor.execute("INSERT INTO tags (post_id, x_coord, y_coord, clothing_name, current_price, original_price, brand, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                          (post_id, x_coord, y_coord, clothing_name, current_price, original_price, brand, link))
+
+    conn.commit()
+
+    return {"message": "User followed successfully"}
 
 
 @app.delete("/users/{user_id}/posts/{post_id}")
 async def delete_post(user_id: str, post_id: str) -> dict[str, str]:
-    return {"message": "Hello World"}
+    pass
 
 
 @app.get("/users/{user_id}/feed")
 async def get_user_feed(user_id: str) -> list[Post]:
-    return {"message": "Hello World"}
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * \
+                    FROM posts \
+                    WHERE user_id IN ( \
+                        SELECT followed_id \
+                        FROM relationships \
+                        WHERE follower_id = ?)", (user_id,))
+    posts = cursor.fetchall()
+
+    posts_results = []
+    
+    for row in posts:
+        posts_results.append({"id": row["id"], "user_id": row["user_id"], "image_url": row["image_url"], "tags": []})
+
+        cursor.execute("SELECT * FROM tags WHERE post_id = ?", (row["id"],))
+        tags = cursor.fetchall()
+
+        for t in tags:
+            posts_results[-1]["tags"].append(
+                {"x_coord": t["x_coord"], 
+                 "y_coord": t["y_coord"], 
+                 "clothing_name": t["clothing_name"], 
+                 "current_price": t["current_price"], 
+                 "original_price" : t["original_price"],
+                 "brand": t["brand"], 
+                 "link": t["link"]
+                 }
+                )
+        
+    conn.close()
+
+    return [dict(post) for post in posts]
 
 ## API Inditex
 
