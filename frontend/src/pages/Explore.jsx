@@ -283,7 +283,11 @@ export default function Explore() {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
         audio: false,
       });
 
