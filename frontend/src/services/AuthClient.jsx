@@ -122,6 +122,7 @@ export default class AuthClient {
     }
 
     const searchResult = await searchResponse.json();
+    console.log("Search result", searchResult);
     return searchResult;
   }
 }

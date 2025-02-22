@@ -32,6 +32,8 @@ export default function LoginPage() {
 
       setAuth(response.token_id);
       setUserID(response.user_id);
+
+      console.log("Logged in");
       navigate("/");
     } catch (error) {
       setErrMsg("Erro ao iniciar sesion");
