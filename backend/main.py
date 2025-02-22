@@ -189,7 +189,7 @@ def get_users() -> list[User]:
 async def get_user_info(user_id: str) -> User:
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT user_id, user_alias, description, profile_picture_url FROM users WHERE id = ?", (user_id,))
+    cursor.execute("SELECT user_id, user_alias, description, profile_picture_url FROM users WHERE user_id = ?", (user_id,))
     user = cursor.fetchone()
 
     conn.close()
@@ -197,7 +197,7 @@ async def get_user_info(user_id: str) -> User:
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     else:
-        result = {"user_id": user[0], "user_alias": user[1], "description": user[2], "profile_picture": user[3]}
+        result = {"user_id": user[0], "user_alias": user[1], "description": user[2], "profile_picture_url": user[3]}
         return result
 
 
@@ -377,7 +377,7 @@ async def search_clothing(query: str, brand: str = "") -> list[Reference]:
 
             for r in response:
                 ref = {
-                    "name": r["name"],
+                    "clothing_name": r["name"],
                     "link": r["link"],
                     "current_price": r["price"]["value"]["current"],
                     "original_price": r["price"]["value"]["original"],
@@ -425,11 +425,9 @@ async def search_clothing_by_image(picture_url: str) -> list[Reference]:
             response = await response.json()
             references = []
 
-            print(response)
-
             for r in response:
                 ref = {
-                    "name": r["name"],
+                    "clothing_name": r["name"],
                     "link": r["link"],
                     "current_price": r["price"]["value"]["current"],
                     "original_price": r["price"]["value"]["original"],
@@ -437,7 +435,6 @@ async def search_clothing_by_image(picture_url: str) -> list[Reference]:
                 }
                 references.append(ref)
 
-            print(references)
             return references
 
 
