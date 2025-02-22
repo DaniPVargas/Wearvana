@@ -1,13 +1,15 @@
-import { Home, Search, User, Settings, X } from 'lucide-react';
+import { Home, Search, User, Settings, X, Upload } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useContext } from 'react';
 import authContext from '../context/AuthProvider';
+import UploadModal from './UploadModal';
 
 export default function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { setAuth } = useContext(authContext);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   // Add scroll lock effect
   useEffect(() => {
@@ -79,8 +81,15 @@ export default function BottomNav() {
           })}
           <div className="flex-1" />
           <button
+            onClick={() => setShowUploadModal(true)}
+            className="flex items-center gap-4 px-3 py-3 rounded-lg transition-colors text-wearvana-primary hover:bg-gray-50"
+          >
+            <Upload className="h-6 w-6 stroke-1.5" />
+            <span className="text-base">Subir</span>
+          </button>
+          <button
             onClick={() => setShowSettingsModal(true)}
-            className="flex items-center gap-4 px-3 py-3 rounded-lg transition-colors text-wearvana-primary hover:bg-gray-50 mt-auto"
+            className="flex items-center gap-4 px-3 py-3 rounded-lg transition-colors text-wearvana-primary hover:bg-gray-50"
           >
             <Settings className="h-6 w-6 stroke-1.5" />
             <span className="text-base">Axustes</span>
@@ -124,6 +133,9 @@ export default function BottomNav() {
           </div>
         </div>
       )}
+
+      {/* Upload Modal */}
+      <UploadModal isOpen={showUploadModal} onClose={() => setShowUploadModal(false)} />
     </>
   );
 } 

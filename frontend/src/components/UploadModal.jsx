@@ -1,78 +1,26 @@
-import { useState, useEffect, useRef } from "react"
-import { Upload, Camera, Image, X, Plus, Link as LinkIcon, Settings } from "lucide-react"
-import Post from "../components/Post"
-import UploadModal from "../components/UploadModal"
+import { useState, useRef, useEffect } from 'react';
+import { Upload, Camera, Image, X, Plus, Link as LinkIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-const generatePost = (id) => ({
-  id,
-  username: `user_${id}`,
-  userImage: `https://picsum.photos/200?random=${id}`,
-  images: [`https://picsum.photos/600/600?random=${id}`],
-  likes: Math.floor(Math.random() * 1000) + 1,
-  caption: `Post caption ${id} 📸✨`,
-})
-
-const posts = [
-  {
-    id: 1,
-    username: "minimal_style",
-    likes: 2345,
-    caption: "Minimal vibes for spring 🌸 #InditexStyle"
-  }
-]
-
-export default function Home() {
-  const [posts, setPosts] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [showUploadModal, setShowUploadModal] = useState(false)
-  const [showTagModal, setShowTagModal] = useState(false)
-  const [selectedImage, setSelectedImage] = useState(null)
-  const [previewUrl, setPreviewUrl] = useState(null)
-  const [showCamera, setShowCamera] = useState(false)
-  const [cameraError, setCameraError] = useState(null)
-  const [productTags, setProductTags] = useState([])
-  const [tagPosition, setTagPosition] = useState({ x: 0, y: 0 })
-  const [currentTag, setCurrentTag] = useState(null)
+export default function UploadModal({ isOpen, onClose }) {
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraError, setCameraError] = useState(null);
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [productTags, setProductTags] = useState([]);
+  const [tagPosition, setTagPosition] = useState({ x: 0, y: 0 });
+  const [currentTag, setCurrentTag] = useState(null);
   
-  const observerTarget = useRef(null)
-  const nextPostId = useRef(1)
-  const fileInputRef = useRef(null)
-  const videoRef = useRef(null)
-  const streamRef = useRef(null)
-  const canvasRef = useRef(null)
-  const imageRef = useRef(null)
+  const fileInputRef = useRef(null);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const canvasRef = useRef(null);
+  const imageRef = useRef(null);
 
-  const loadMorePosts = () => {
-    setLoading(true)
-    const newPosts = Array.from({ length: 3 }, () => generatePost(nextPostId.current++))
-    setPosts(prev => [...prev, ...newPosts])
-    setLoading(false)
-  }
-
+  // Add scroll lock effect
   useEffect(() => {
-    // Load initial posts
-    loadMorePosts()
-  }, [])
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !loading) {
-          loadMorePosts()
-        }
-      },
-      { threshold: 1.0 }
-    )
-
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current)
-    }
-
-    return () => observer.disconnect()
-  }, [loading])
-
-  useEffect(() => {
-    if (showUploadModal) {
+    if (isOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -80,7 +28,7 @@ export default function Home() {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [showUploadModal]);
+  }, [isOpen]);
 
   const handleImageUpload = (e) => {
     e.preventDefault();
@@ -194,20 +142,18 @@ export default function Home() {
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     
     setTagPosition({ x, y });
-    setCurrentTag('new'); // Use 'new' to indicate we're creating a new tag
+    setCurrentTag('new');
   };
 
   const handleAddTag = (tag) => {
     if (currentTag === 'new') {
-      // Add new tag
       setProductTags(tags => [...tags, { ...tag, position: tagPosition }]);
     } else if (typeof currentTag === 'number') {
-      // Edit existing tag
       setProductTags(tags => 
         tags.map((t, i) => i === currentTag ? { ...t, ...tag } : t)
       );
     }
-    setCurrentTag(null); // This will close the details modal but keep the tagging mode active
+    setCurrentTag(null);
   };
 
   const handleRemoveTag = (index) => {
@@ -220,51 +166,109 @@ export default function Home() {
     setShowTagModal(true);
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-[975px] mx-auto px-0 md:px-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Main Feed */}
-          <div className="flex-grow max-w-[630px]">
-            <div className="max-w-[470px] mx-auto md:mx-0">
-              {posts.map((post) => (
-                <Post key={post.id} {...post} />
-              ))}
+  const handleClose = () => {
+    setSelectedImage(null);
+    setPreviewUrl(null);
+    setProductTags([]);
+    stopCamera();
+    onClose();
+  };
 
-              <div 
-                ref={observerTarget}
-                className="h-10 flex items-center justify-center"
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          handleClose();
+        }
+      }}
+    >
+      <div className="bg-white w-full max-w-lg rounded-xl overflow-hidden">
+        {/* Modal Header */}
+        <div className="border-b border-gray-200 p-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Nova publicación</h2>
+          <button 
+            onClick={handleClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        {/* Modal Content */}
+        <div className="p-4">
+          {!selectedImage ? (
+            <div className="space-y-4">
+              <button 
+                onClick={startCamera}
+                className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
               >
-                {loading ? (
-                  <div className="text-gray-400">Loading more posts...</div>
-                ) : (
-                  <div className="h-1 w-1" /> // Invisible element for intersection observer
-                )}
+                <Camera className="h-5 w-5" />
+                <span>Hacer foto</span>
+              </button>
+              <button 
+                onClick={handleImageUpload}
+                className="wearvana-button w-full flex items-center justify-center gap-2 py-3 !bg-white !text-black border border-gray-200"
+              >
+                <Image className="h-5 w-5" />
+                <span>Subir de galería</span>
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                accept="image/*"
+                className="hidden"
+              />
+            </div>
+          ) : (
+            <div>
+              <div className="relative">
+                <img
+                  ref={imageRef}
+                  src={previewUrl}
+                  alt="Preview"
+                  className="w-full aspect-square object-cover rounded-lg"
+                  onClick={handleImageClick}
+                  style={{ cursor: showTagModal ? 'crosshair' : 'default' }}
+                />
+                {/* Product Tags */}
+                {productTags.map((tag, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleEditTag(index)}
+                    className="absolute w-6 h-6 -ml-3 -mt-3 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
+                    style={{ 
+                      left: `${tag.position.x}%`,
+                      top: `${tag.position.y}%`
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                ))}
+              </div>
+              <div className="mt-4 space-y-4">
+                <button 
+                  className={`wearvana-button w-full flex items-center justify-center gap-2 py-3 ${showTagModal ? '!bg-wearvana-accent/10 !text-wearvana-accent' : ''}`}
+                  onClick={() => setShowTagModal(!showTagModal)}
+                >
+                  <LinkIcon className="h-5 w-5" />
+                  <span>
+                    {showTagModal && !currentTag ? 'Selecciona la prenda' : 'Etiquetar productos'}
+                  </span>
+                </button>
               </div>
             </div>
-          </div>
-
-          {/* Empty sidebar placeholder for layout balance */}
-          <div className="hidden lg:block w-[319px] flex-none" />
+          )}
         </div>
       </div>
-
-      {/* Upload Button */}
-      <button 
-        onClick={() => setShowUploadModal(true)}
-        className="fixed md:hidden bottom-20 right-4 wearvana-button p-3 rounded-full shadow-lg z-40"
-        aria-label="Upload new post"
-      >
-        <Upload className="h-5 w-5" />
-      </button>
-
-      {/* Upload Modal */}
-      <UploadModal isOpen={showUploadModal} onClose={() => setShowUploadModal(false)} />
 
       {/* Tag Modal */}
       {showTagModal && currentTag !== null && (
         <div 
-          className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/50 z-[80] flex items-center justify-center p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setCurrentTag(null);
@@ -352,7 +356,7 @@ export default function Home() {
 
       {/* Camera View */}
       {showCamera && (
-        <div className="fixed inset-0 bg-black z-50">
+        <div className="fixed inset-0 bg-black z-[80]">
           <div className="relative h-full">
             <video
               ref={videoRef}
@@ -389,5 +393,4 @@ export default function Home() {
       <canvas ref={canvasRef} className="hidden" />
     </div>
   );
-}
-
+} 
