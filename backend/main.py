@@ -227,6 +227,7 @@ async def search_clothing_by_image(user_id: str = Form(...), file: UploadFile = 
     response.raise_for_status()
 
     print(response.url)
+    print(response.headers)
     print(params)
     print(response)
     print(response.text)
