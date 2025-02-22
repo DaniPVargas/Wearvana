@@ -164,7 +164,7 @@ def create_user(create_user_body: CreateUserBody) -> str:
 
     conn.close()
 
-    register_token = RegisterToken(user_id=user_id, display_name=user_alias)
+    register_token = RegisterToken(user_id=user_id, username=user_alias, display_name=user_alias)
 
     try:
         response: RegisteredToken = passwordless_client.register_token(register_token)
