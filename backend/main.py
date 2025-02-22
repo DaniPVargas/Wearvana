@@ -6,7 +6,7 @@ import sqlite3
 import uuid
 from bs4 import BeautifulSoup
 from typing import Any
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from passwordless import (
     PasswordlessClient,
@@ -25,8 +25,9 @@ class Settings(BaseSettings):
     pictures_dir: str
     inditex_text_search_url: str
     inditex_image_search_url: str
-    inditex_key: str
+    inditex_token_url: str
     inditex_client_id: str
+    inditex_client_password: str
     inditex_scope: str
     passwordless_dev_secret: str
 
@@ -34,19 +35,34 @@ class Settings(BaseSettings):
 
 class InditexToken:
     def __init__(self, token_url: str, user_id: str, user_pwd: str):
+        self.token_url = token_url
+        self.user_id = user_id
+        self.user_pwd = user_pwd
+
+        self._fetch_token()
+    
+    def get_token(self):
+        if datetime.now() >= self.expiry_date:
+            self._fetch_token()
+
+        return self.token
+
+    def _fetch_token(self):
         payload = 'scope=technology.catalog.read&grant_type=client_credentials'
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded',
+            "User-Agent": "PostmanRuntime/7.43.0"
         }
-        res = requests.post(url=token_url, auth=(user_id, user_pwd), headers=headers, data=payload)     
+        res = requests.post(url=self.token_url, auth=(self.user_id, self.user_pwd), headers=headers, data=payload)     
+        res.raise_for_status()
         res = res.json()
         self.token = res["id_token"]
-        self.expiry_date = datetime.now() + datetime.timedelta(seconds=res["expires_in"])
-
+        self.expiry_date = datetime.now() + timedelta(seconds=res["expires_in"] - 600)
 
 settings = Settings()
 app = FastAPI()
 passwordless_client = PasswordlessClientBuilder(PasswordlessOptions(settings.passwordless_dev_secret)).build()
+inditex_token = InditexToken(settings.inditex_token_url, settings.inditex_client_id, settings.inditex_client_password)
 
 @app.post("/auth")
 async def authenticate(token: str) -> VerifiedUser:
@@ -124,7 +140,8 @@ async def upload_picture(user_id: str, file: UploadFile = File(...)) -> dict[str
 ## API Inditex
 
 @app.post("/clothing:text_search")
-async def search_clothing(query: str, brand: str) -> list[Reference]:
+async def search_clothing(query: str, brand: str = "") -> list[Reference]:
+    token = inditex_token.get_token()
 
     params = {
         "query": query,
@@ -133,7 +150,7 @@ async def search_clothing(query: str, brand: str) -> list[Reference]:
 
     headers = {
         'User-Agent': "PostmanRuntime/7.43.0",
-        "Authorization": f"Bearer {settings.inditex_key}",  
+        "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
 
@@ -156,29 +173,5 @@ async def search_clothing(query: str, brand: str) -> list[Reference]:
 
 @app.post("/clothing:image_search")
 async def search_clothing_by_image(file: UploadFile = File(...)) -> list[Reference]:
-    headers = {
-        'User-Agent': "PostmanRuntime/7.43.0",
-        "Authorization": f"Bearer {settings.inditex_key}",  
-        "Content-Type": "application/json"
-    }
-
-    body = {
-        "file": file
-    }
-
-    response = requests.get(settings.inditex_text_search_url, params=params, headers=headers, )
-
-    references = []
-
-    for r in response.json():
-        ref = {
-            "name": r["name"], 
-            "link": r["link"], 
-            "current_price" : r["price"]["value"]["current"],
-            "original_price" : r["price"]["value"]["original"],
-            "brand": r["brand"],
-            }
-        references.append(ref)
-
-    return references
+    pass
 
