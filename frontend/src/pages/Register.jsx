@@ -1,6 +1,6 @@
 import { useContext, useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import authContext from "../context/AuthProvider";
+import AuthContext from "../context/AuthProvider";
 import AuthClient from "../services/AuthClient";
 import * as Passwordless from "@passwordlessdev/passwordless-client";
 
@@ -13,7 +13,7 @@ export default function Register() {
   const [fullName, setFullName] = useState("");
   const [description, setDescription] = useState("");
   const [errMsg, setErrMsg] = useState("");
-  const { setAuth } = useContext(authContext);
+  const { setAuth, setUserAlias } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const isFormValid = alias.trim() && fullName.trim() && description.trim();
@@ -52,6 +52,7 @@ export default function Register() {
         const verifiedToken = await authClientInstance.signIn(token);
         localStorage.setItem("jwt", verifiedToken.jwt);
         setAuth({ verifiedToken });
+        setUserAlias(alias);
 
         // Send the user data to backend
 

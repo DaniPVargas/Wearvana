@@ -65,4 +65,26 @@ export default class AuthClient {
 
     return await response.json();
   }
+
+  async imageSearch(image, userAlias) {
+    const formData = new FormData();
+    formData.append("image", image);
+
+    // First upload the image to the server
+    const uploadResponse = await fetch(
+      `${this.apiBaseUrl}/${userAlias}/pictures`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    if (!uploadResponse.ok) {
+      throw new Error("Erro ao subir a imaxe");
+    } else {
+      const searchResult = await searchResponse.json();
+      const imageUrl = searchResult.image_url;
+      console.log("Image URL", imageUrl);
+    }
+  }
 }
