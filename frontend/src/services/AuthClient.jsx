@@ -1,6 +1,7 @@
 export default class AuthClient {
   constructor() {
-    this.apiBaseUrl = "https://wearvana.onrender.com";
+    // this.apiBaseUrl = "https://wearvana.onrender.com";
+    this.apiBaseUrl = "http://localhost:5000";
   }
 
   async signIn(token) {
@@ -33,18 +34,17 @@ export default class AuthClient {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({}),
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Registration failed");
+        throw new Error(errorData.error || "Erro rexistrando o usuario");
       }
 
       return await response.json();
     } catch (error) {
-      console.error("Error registering user", error);
+      console.error("Erro rexistrando o usuario", error);
       throw error;
     }
   }

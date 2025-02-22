@@ -31,8 +31,7 @@ export default function RegisterPage() {
       toast(error.message, {
         className: "toast-error",
       });
-      console.log(registerToken);
-      console.log("Error registering user", error);
+      console.log(error);
     }
 
     if (registerToken) {
@@ -43,16 +42,14 @@ export default function RegisterPage() {
       });
 
       // Use the alias for the credential nickname
-      const credentialNickname = alias;
-      //   const finalResponse = await p.register(
-      //     registerToken.token,
-      //     credentialNickname
-      //   );
-      finalResponse = true;
+      const { token, error } = await p.register(registerToken);
 
-      if (finalResponse) {
+      if (!error) {
         toast(`Registered '${alias}'!`);
         console.log(`Registered '${alias}'!`);
+      } else {
+        toast(`Couldn't register '${alias}'. Error: ${error}`);
+        console.log("Error registering user", error);
       }
     }
   };
