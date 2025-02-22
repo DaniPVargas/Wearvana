@@ -64,7 +64,12 @@ export default function UploadModal({ isOpen, onClose }) {
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 720 },
+          height: { ideal: 1280 },
+          aspectRatio: { ideal: 9/16 }
+        },
         audio: false
       });
       

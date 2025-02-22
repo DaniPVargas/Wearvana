@@ -17,12 +17,12 @@ function Root() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            {/* <Route element={<ProtectedRoute />}> */}
-            <Route path="/" element={<Home />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/user/:username" element={<UserProfile />} />
-            <Route path="/explore" element={<Explore />} />
-            {/* </Route> */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/user/:username" element={<UserProfile />} />
+              <Route path="/explore" element={<Explore />} />
+            </Route>
           </Routes>
         </Layout>
       </Router>
