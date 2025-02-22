@@ -10,6 +10,7 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 from typing import Any
 from datetime import datetime, timedelta
+import aiohttp
 
 from passwordless import (
     PasswordlessClient,
@@ -88,6 +89,8 @@ async def authenticate(body: AuthBody) -> VerifiedUser:
 @app.post("/users")
 async def create_user(user_alias: str) -> Any:
     user_id = str(uuid.uuid4())
+
+    
 
     # TODO: Guardar en BDD usuario y datos
 
@@ -185,7 +188,7 @@ async def search_clothing(query: str, brand: str = "") -> list[Reference]:
 
     return references
 
-@app.post("/user/{user_id}/pictures")
+@app.post("/users/{user_id}/pictures")
 async def upload_picture(user_id: str, file: UploadFile = File(...)) -> dict[str, str]:
     Path(f"{settings.pictures_dir}/{user_id}").mkdir(parents=True, exist_ok=True)
 
@@ -217,7 +220,7 @@ async def search_clothing_by_image(picture_url: str) -> list[Reference]:
         "Content-Type": "application/json",
     }
 
-    response =  requests.get(f"{settings.inditex_image_search_url}", headers=headers, params=params)
+    response = await aiohttp.request("GET", settings.inditex_image_search_url, headers=headers, params=params)
     response.raise_for_status()
 
     print(response.url)
