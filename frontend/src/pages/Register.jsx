@@ -13,7 +13,7 @@ export default function Register() {
   const [fullName, setFullName] = useState("");
   const [description, setDescription] = useState("");
   const [errMsg, setErrMsg] = useState("");
-  const { setAuth, setUserAlias } = useContext(AuthContext);
+  const { setAuth, setUserID } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const isFormValid = alias.trim() && fullName.trim() && description.trim();
@@ -34,7 +34,7 @@ export default function Register() {
     const authClientInstance = new AuthClient();
     try {
       // Register the alias with AuthClient
-      registerToken = await authClientInstance.register(alias);
+      registerToken = await authClientInstance.register(alias, description, "");
     } catch (error) {
       setErrMsg(error.message);
     }
@@ -49,10 +49,9 @@ export default function Register() {
       const { token, error } = await p.register(registerToken);
 
       if (!error) {
-        const verifiedToken = await authClientInstance.signIn(token);
-        localStorage.setItem("jwt", verifiedToken.jwt);
-        setAuth({ verifiedToken });
-        setUserAlias(alias);
+        const response = await authClientInstance.signIn(token);
+        setAuth(response.token_id);
+        setUserID(response.user_id);
 
         // Send the user data to backend
 

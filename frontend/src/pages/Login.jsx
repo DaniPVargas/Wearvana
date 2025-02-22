@@ -4,17 +4,12 @@ import * as Passwordless from "@passwordlessdev/passwordless-client";
 import AuthClient from "../services/AuthClient";
 import { Link, useNavigate } from "react-router-dom";
 
-// import {
-//   PASSWORDLESS_API_KEY,
-//   PASSWORDLESS_API_URL,
-// } from "../configuration/PasswordlessOptions";
-
 const PASSWORDLESS_API_KEY = "wearvana:public:a72fe9ba831b4292808084b49406b3d3";
 const PASSWORDLESS_API_URL = "https://v4.passwordless.dev";
 
 export default function LoginPage() {
   const [errMsg, setErrMsg] = useState("");
-  const { setAuth } = useContext(authContext);
+  const { setAuth, setUserID } = useContext(authContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -33,9 +28,10 @@ export default function LoginPage() {
         return;
       }
 
-      const verifiedToken = await authClientInstance.signIn(token.token);
-      localStorage.setItem("jwt", verifiedToken.jwt);
-      setAuth({ verifiedToken });
+      const response = await authClientInstance.signIn(token.token);
+
+      setAuth(response.token_id);
+      setUserID(response.user_id);
       navigate("/");
     } catch (error) {
       setErrMsg("Erro ao iniciar sesion");
