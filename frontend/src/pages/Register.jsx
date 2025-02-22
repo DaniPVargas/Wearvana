@@ -88,7 +88,7 @@ export default function Register() {
   return (
     <div className="max-w-md px-5 mx-auto flex items-center justify-center min-h-screen bg-ig-primary">
       <section className="w-full p-6 bg-white rounded-lg shadow-lg">
-        <img src="/logo.svg" alt="Logo" className="mx-auto mb-16 w-24 h-24" />
+        <img src="/logo.svg" alt="Logo" className="mx-auto mb-16 w-48 h-48" />
         <div className="mb-4">
           <input
             type="text"

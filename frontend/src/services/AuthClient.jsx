@@ -108,13 +108,12 @@ export default class AuthClient {
     const imageUrl = await this.uploadImage(image, userID);
 
     const searchResponse = await fetch(
-      `${this.apiBaseUrl}/clothing:image_search`,
+      `${this.apiBaseUrl}/clothing:image_search?picture_url=${imageUrl}`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ picture_url: imageUrl }),
+        }
       }
     );
 
@@ -123,7 +122,6 @@ export default class AuthClient {
     }
 
     const searchResult = await searchResponse.json();
-    console.log("Search result", searchResult);
     return searchResult;
   }
 }
