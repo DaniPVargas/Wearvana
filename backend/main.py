@@ -220,29 +220,25 @@ async def search_clothing_by_image(picture_url: str) -> list[Reference]:
         "Content-Type": "application/json",
     }
 
-    response = await aiohttp.request("GET", settings.inditex_image_search_url, headers=headers, params=params)
-    response.raise_for_status()
+    async with aiohttp.ClientSession() as session:
+        async with session.get(settings.inditex_image_search_url, headers=headers, params=params) as response:
+            response = await response.json()
+            references = []
 
-    print(response.url)
-    print(response.headers)
-    print(params)
-    print(response)
-    print(response.text)
-    print(response.json())
-    references = []
+            print(response)
 
-    for r in response.json():
-        ref = {
-            "name": r["name"],
-            "link": r["link"],
-            "current_price": r["price"]["value"]["current"],
-            "original_price": r["price"]["value"]["original"],
-            "brand": r["brand"],
-        }
-        references.append(ref)
+            for r in response:
+                ref = {
+                    "name": r["name"],
+                    "link": r["link"],
+                    "current_price": r["price"]["value"]["current"],
+                    "original_price": r["price"]["value"]["original"],
+                    "brand": r["brand"],
+                }
+                references.append(ref)
 
-    print(references)
-    return references
+            print(references)
+            return references
 
 
 @app.get("/pictures/{user_id}/{picture_id}")
