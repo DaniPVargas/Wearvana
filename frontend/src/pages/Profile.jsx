@@ -1,4 +1,4 @@
-import { Settings, MapPin, Link as LinkIcon, X, Moon, Sun, ChevronDown } from 'lucide-react';
+import { Settings, MapPin, Link as LinkIcon, X } from 'lucide-react';
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authContext from '../context/AuthProvider';
@@ -9,16 +9,6 @@ export default function Profile() {
   const { setAuth } = useContext(authContext);
   const [isLoading, setIsLoading] = useState(true);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [showLanguages, setShowLanguages] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState('Galego');
-  
-  const languages = [
-    { code: 'gl', name: 'Galego' },
-    { code: 'eu', name: 'Euskara' },
-    { code: 'es', name: 'Español' },
-    { code: 'en', name: 'English' }
-  ];
 
   // Add scroll lock effect
   useEffect(() => {
@@ -213,38 +203,7 @@ export default function Profile() {
                 <X className="h-6 w-6" />
               </button>
             </div>
-            <div className="p-4 space-y-4">
-              <button 
-                className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors"
-                onClick={() => {
-                  setIsDarkMode(!isDarkMode);
-                  // Theme toggle logic will be implemented later
-                }}
-              >
-                <div className="flex items-center gap-2">
-                  {isDarkMode ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-                  <span>Modo escuro</span>
-                </div>
-                <span className="text-sm text-gray-500">{isDarkMode ? 'On' : 'Off'}</span>
-              </button>
-              <div className="w-full px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <span>Idioma</span>
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={currentLanguage}
-                      onChange={(e) => setCurrentLanguage(e.target.value)}
-                      className="text-sm text-gray-500 bg-transparent border-none focus:outline-none cursor-pointer"
-                    >
-                      {languages.map((lang) => (
-                        <option key={lang.code} value={lang.code}>
-                          {lang.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
+            <div className="p-4">
               <button 
                 className="w-full flex items-center justify-center px-4 py-3 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
                 onClick={() => {
