@@ -200,6 +200,20 @@ async def get_user_info(user_id: str) -> User:
         result = {"user_id": user[0], "user_alias": user[1], "description": user[2], "profile_picture_url": user[3]}
         return result
 
+@app.patch("/users/{user_id}")
+async def update_user_info(user_id: str, update_user_body: UpdateUserBody) -> dict[str, str]:
+    conn = get_db()
+    cursor = conn.cursor()
+
+    description = update_user_body.description
+    profile_picture_url = update_user_body.profile_picture_url
+
+    cursor.execute("UPDATE users SET description = ?, profile_picture_url = ? WHERE user_id = ?", (description, profile_picture_url, user_id))
+    conn.commit()
+
+    conn.close()
+
+    return {"message": "User updated successfully"}
 
 @app.get("/users/{user_id}/posts")
 async def get_user_posts(user_id: str) -> list[Post]:

@@ -43,3 +43,7 @@ class UploadPostBody(BaseModel):
     title: str
     image_url: str
     tags: list[Tag]
+
+class UpdateUserBody(BaseModel):
+    description: Optional[str] = None
+    profile_picture_url: Optional[str] = None
