@@ -59,45 +59,42 @@ export default function RegisterPage() {
 
   return (
     <>
-      <section className="max-w-md mx-auto mt-8 p-6 bg-white rounded-lg shadow-lg">
-        {errMsg && (
-          <p className="text-red-500 text-sm mb-4" aria-live="assertive">
-            {errMsg}
-          </p>
-        )}
-        <h1 className="text-2xl font-semibold text-center mb-4">Register</h1>
-        <div className="mb-4">
-          <label
-            htmlFor="alias"
-            className="block text-sm font-medium text-gray-700"
+      <div className="max-w-md px-5 mx-auto flex items-center justify-center min-h-screen bg-ig-primary">
+        <section className="w-full mt-8 p-6 bg-white rounded-lg shadow-lg">
+          {errMsg && (
+            <p className="text-red-500 text-sm mb-4" aria-live="assertive">
+              {errMsg}
+            </p>
+          )}
+          <h1 className="text-2xl font-semibold text-center mb-4">Register</h1>
+          <div className="mb-4">
+            <input
+              type="text"
+              id="alias"
+              ref={aliasRef}
+              autoComplete="off"
+              onChange={(e) => setAlias(e.target.value)}
+              value={alias}
+              required
+              placeholder="alias"
+              className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <button
+            onClick={handleSubmit}
+            className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
           >
-            Alias:
-          </label>
-          <input
-            type="text"
-            id="alias"
-            ref={aliasRef}
-            autoComplete="off"
-            onChange={(e) => setAlias(e.target.value)}
-            value={alias}
-            required
-            className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-        <button
-          onClick={handleSubmit}
-          className="w-full py-2 mt-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          Register
-        </button>
-        <p className="mt-4 text-center text-sm text-gray-500">
-          Already registered?{" "}
-          <a href="#" className="text-blue-600 hover:underline">
-            Sign in
-          </a>
-        </p>
-        <ToastContainer />
-      </section>
+            Register
+          </button>
+          <p className="mt-4 text-center text-sm text-gray-500">
+            Already registered?{" "}
+            <a href="#" className="text-ig-link hover:underline">
+              Sign in
+            </a>
+          </p>
+          <ToastContainer />
+        </section>
+      </div>
     </>
   );
 }
