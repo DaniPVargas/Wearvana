@@ -64,62 +64,6 @@ function EmptyState({ message }) {
   );
 }
 
-// Add mock data at the top of the file, after imports
-const MOCK_SEARCH_RESULTS = [
-  {
-    id: "367022517",
-    name: "GEOMETRIC JACQUARD SHIRT",
-    price: {
-      currency: "EUR",
-      value: {
-        current: 29.95,
-      },
-    },
-    link: "https://www.zara.com/es/en/geometric-jacquard-shirt-p01618475.html?v1=367022517",
-    brand: "zara",
-  },
-  {
-    id: "364086315",
-    name: "COTTON - LINEN SHIRT",
-    price: {
-      currency: "EUR",
-      value: {
-        current: 29.95,
-      },
-    },
-    link: "https://www.zara.com/es/en/cotton---linen-shirt-p01063402.html?v1=364086315",
-    brand: "zara",
-  },
-];
-
-// Add mock data for image search
-const MOCK_IMAGE_SEARCH_RESULTS = [
-  {
-    id: "367022517",
-    name: "GEOMETRIC JACQUARD SHIRT",
-    price: {
-      currency: "EUR",
-      value: {
-        current: 29.95,
-      },
-    },
-    link: "https://www.zara.com/es/en/geometric-jacquard-shirt-p01618475.html?v1=367022517",
-    brand: "zara",
-  },
-  {
-    id: "364086315",
-    name: "COTTON - LINEN SHIRT",
-    price: {
-      currency: "EUR",
-      value: {
-        current: 29.95,
-      },
-    },
-    link: "https://www.zara.com/es/en/cotton---linen-shirt-p01063402.html?v1=364086315",
-    brand: "zara",
-  },
-];
-
 export default function Explore() {
   const [activeTab, setActiveTab] = useState("search");
   const [searchQuery, setSearchQuery] = useState("");
@@ -140,6 +84,7 @@ export default function Explore() {
   const canvasRef = useRef(null);
   const [showPreviewOptions, setShowPreviewOptions] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
+  const [inspirationResults, setInspirationResults] = useState([]);
   const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
   const { userID } = useContext(AuthContext);
 
@@ -162,24 +107,6 @@ export default function Explore() {
     const randomIndex = Math.floor(Math.random() * searchSuggestions.length);
     setCurrentSuggestionIndex(randomIndex);
   }, []);
-
-  // Mock data - would come from API
-  const products = [
-    {
-      id: 1,
-      name: "Oversized Blazer",
-      price: 49.99,
-      image:
-        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-HbpRL3prpms6Fn7t544TSccClzI2lb.png",
-    },
-    {
-      id: 2,
-      name: "Linen Blend Shirt",
-      price: 29.99,
-      image:
-        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-HbpRL3prpms6Fn7t544TSccClzI2lb.png",
-    },
-  ];
 
   // Add scroll lock effect
   useEffect(() => {
@@ -230,36 +157,12 @@ export default function Explore() {
 
     try {
       const data = await authClientInstance.imageSearch(file, userID);
+      setInspirationResults(data);
     } catch (error) {
       console.log(error);
     } finally {
-      setSearchResults(MOCK_IMAGE_SEARCH_RESULTS);
       setIsLoading(false);
     }
-
-    // Comment out the actual API call for now
-    /*
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/clothing:image_search`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-
-      const data = await response.json();
-      setSearchResults(data);
-    } catch (error) {
-      console.error('Error searching by image:', error);
-    } finally {
-      setIsLoading(false);
-    }
-    */
   };
 
   const handleFileSelect = async (e) => {
@@ -400,10 +303,6 @@ export default function Explore() {
     }
     setStreaming(false);
     setShowCamera(false);
-  };
-
-  const startCountdown = () => {
-    setCountdown(3);
   };
 
   useEffect(() => {
@@ -633,7 +532,7 @@ export default function Explore() {
                     ? Array(6)
                         .fill(null)
                         .map((_, i) => <ProductCard key={i} loading={true} />)
-                    : searchResults.map((product, index) => (
+                    : (activeTab === "search" ? searchResults : inspirationResults).map((product, index) => (
                         <ProductCard
                           key={index}
                           name={product.name}
