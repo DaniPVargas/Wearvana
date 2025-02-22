@@ -154,18 +154,6 @@ async def delete_post(user_id: str, post_id: str) -> dict[str, str]:
 async def get_user_feed(user_id: str) -> list[Post]:
     return {"message": "Hello World"}
 
-
-@app.post("/users/{user_id}/pictures")
-async def upload_picture(user_id: str, file: UploadFile = File(...)) -> dict[str, str]:
-    try:
-        with open(f"{settings.picture_dir}/uploaded_image.png", "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        return {"message": "Image uploaded successfully"}
-    except Exception as e:
-        return {"error": str(e)}
-
-
 ## API Inditex
 
 
@@ -197,24 +185,30 @@ async def search_clothing(query: str, brand: str = "") -> list[Reference]:
 
     return references
 
-
-@app.post("/clothing:image_search")
-async def search_clothing_by_image(user_id: str = Form(...), file: UploadFile = File(...)) -> list[Reference]:
-
+@app.post("/user/{user_id}/pictures")
+async def upload_picture(user_id: str, file: UploadFile = File(...)) -> dict[str, str]:
     Path(f"{settings.pictures_dir}/{user_id}").mkdir(parents=True, exist_ok=True)
 
-    image_id = str(uuid.uuid4())
+    picture_id = str(uuid.uuid4())
 
     # TODO: Convert image to JPG if necessary
 
-    # Save the uploaded file
-    with open(f"{settings.pictures_dir}/{user_id}/{image_id}.jpg", "wb") as buffer:
+    with open(f"{settings.pictures_dir}/{user_id}/{picture_id}.jpg", "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
+
+    picture_url = f"https://wearvana.onrender.com/pictures/{user_id}/{picture_id}"
+
+    return {"message": "Image uploaded successfully",
+            "image_url": picture_url}
+
+
+@app.post("/clothing:image_search")
+async def search_clothing_by_image(picture_url: str) -> list[Reference]:
 
     token = inditex_token.get_token()
 
     params = {
-        "image": f"https://wearvana.onrender.com/pictures/{user_id}/{image_id}",
+        "image": picture_url
     }
 
     headers = {
