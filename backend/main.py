@@ -218,6 +218,8 @@ async def search_clothing_by_image(user_id: str = Form(...), file: UploadFile = 
     response = requests.get(settings.inditex_image_search_url, params=params, headers=headers)
     response.raise_for_status()
 
+    print(response)
+    print(response.json())
     references = []
 
     for r in response.json():
@@ -230,6 +232,7 @@ async def search_clothing_by_image(user_id: str = Form(...), file: UploadFile = 
             }
         references.append(ref)
 
+    print(references)
     return references
 
 @app.get("/pictures/{user_id}/{picture_id}")
