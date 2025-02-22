@@ -206,10 +206,8 @@ async def search_clothing_by_image(user_id: str = Form(...), file: UploadFile = 
     token = inditex_token.get_token()
 
     params = {
-        "image": f"http://0.0.0.0:8000/pictures/{user_id}/{image_id}",
+        "image": f"https://wearvana.onrender.com/pictures/{user_id}/{image_id}",
     }
-
-    print(params["image"])
 
     headers = {
         'User-Agent': "PostmanRuntime/7.43.0",
