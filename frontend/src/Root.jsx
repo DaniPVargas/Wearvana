@@ -12,6 +12,7 @@ function Root() {
           <Route path="/" element={<Home />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/user/:username" element={<UserProfile />} />
+          <Route path="/login" element={<div>Login</div>} />
         </Routes>
       </Layout>
     </Router>
