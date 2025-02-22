@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { Upload, Camera, Image, X, Plus, Link as LinkIcon } from 'lucide-react';
+import { Upload, Camera, Image, X, Plus, Link as LinkIcon, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import ImageCaptureService from '../services/ImageCaptureService';
 
 export default function UploadModal({ isOpen, onClose }) {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -17,6 +18,9 @@ export default function UploadModal({ isOpen, onClose }) {
   const streamRef = useRef(null);
   const canvasRef = useRef(null);
   const imageRef = useRef(null);
+
+  const [isCapturingProduct, setIsCapturingProduct] = useState(false);
+  const [productUrl, setProductUrl] = useState('');
 
   // Add scroll lock effect
   useEffect(() => {
@@ -174,6 +178,24 @@ export default function UploadModal({ isOpen, onClose }) {
     onClose();
   };
 
+  const handleProductImageCapture = async (e) => {
+    e.preventDefault();
+    if (!productUrl) return;
+
+    setIsCapturingProduct(true);
+    try {
+      const file = await ImageCaptureService.captureProductImage(productUrl);
+      setSelectedImage(file);
+      setPreviewUrl(URL.createObjectURL(file));
+      setProductUrl('');
+    } catch (error) {
+      console.error('Error capturing product image:', error);
+      alert('Error al capturar la imagen del producto. Por favor, inténtalo de nuevo.');
+    } finally {
+      setIsCapturingProduct(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -259,6 +281,22 @@ export default function UploadModal({ isOpen, onClose }) {
                     {showTagModal && !currentTag ? 'Selecciona la prenda' : 'Etiquetar productos'}
                   </span>
                 </button>
+                {productTags.length > 0 && (
+                  <button 
+                    className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
+                    onClick={() => {
+                      // TODO: Implement post creation
+                      console.log('Creating post with:', {
+                        image: selectedImage,
+                        tags: productTags
+                      });
+                      handleClose();
+                    }}
+                  >
+                    <Send className="h-5 w-5" />
+                    <span>Publicar</span>
+                  </button>
+                )}
               </div>
             </div>
           )}
