@@ -2,8 +2,7 @@ import { useContext, useRef, useState } from "react";
 import authContext from "../context/AuthProvider";
 import * as Passwordless from "@passwordlessdev/passwordless-client";
 import AuthClient from "../services/AuthClient";
-import { ToastContainer } from "react-toastify";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 // import {
 //   PASSWORDLESS_API_KEY,
@@ -15,8 +14,8 @@ const PASSWORDLESS_API_URL = "https://v4.passwordless.dev";
 
 export default function LoginPage() {
   const [errMsg, setErrMsg] = useState("");
-  const [success, setSuccess] = useState(false);
   const { setAuth } = useContext(authContext);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     try {
@@ -27,13 +26,17 @@ export default function LoginPage() {
       const authClientInstance = new AuthClient();
 
       const token = await passwordless.signinWithDiscoverable();
-      console.log(token);
-      if (!token) return;
+      if (!token) {
+        setErrMsg(
+          "Non tes unha passkey asociada a este navegador. Por favor, inicia sesión."
+        );
+        return;
+      }
 
       const verifiedToken = await authClientInstance.signIn(token.token);
       localStorage.setItem("jwt", verifiedToken.jwt);
       setAuth({ verifiedToken });
-      setSuccess(true);
+      navigate("/");
     } catch (error) {
       setErrMsg("Erro ao iniciar sesion");
     }
@@ -41,36 +44,28 @@ export default function LoginPage() {
 
   return (
     <div className="max-w-md px-5 mx-auto flex items-center justify-center min-h-screen bg-ig-primary">
-      <section className="w-full mt-8 p-6 bg-white rounded-lg shadow-lg">
+      <section className="w-full p-6 bg-white rounded-lg shadow-lg">
+        <img src="/logo.svg" alt="Logo" className="mx-auto mb-16 w-24 h-24 " />
+        <button
+          onClick={handleSubmit}
+          className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
+        >
+          Iniciar sesión
+        </button>
+        <p className="mt-4 text-center text-sm text-gray-500">
+          Aínda non tes unha conta?{" "}
+          <Link to="/register" className="hover:underline text-wearvana-accent">
+            Crea unha conta
+          </Link>
+        </p>
         {errMsg && (
-          <p className="text-red-500 text-sm mb-4" aria-live="assertive">
+          <p
+            className="text-center text-red-500 text-sm mt-2"
+            aria-live="assertive"
+          >
             {errMsg}
           </p>
         )}
-        {success ? (
-          <h1 className="text-2xl font-semibold text-center">Fixeches login</h1>
-        ) : (
-          <>
-            <img
-              src="/logo.svg"
-              alt="Logo"
-              className="mx-auto mb-6 w-24 h-24 "
-            />
-            <button
-              onClick={handleSubmit}
-              className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
-            >
-              Iniciar sesión
-            </button>
-            <p className="mt-4 text-center text-sm text-gray-500">
-              Aínda non tes unha conta?{" "}
-              <Link to="/register" className="text-ig-link hover:underline">
-                Crea unha conta
-              </Link>
-            </p>
-          </>
-        )}
-        <ToastContainer />
       </section>
     </div>
   );
