@@ -7,7 +7,7 @@ import UploadModal from './UploadModal';
 export default function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { setAuth } = useContext(authContext);
+  const { setAuth, setUserID } = useContext(authContext);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
 
@@ -122,7 +122,8 @@ export default function BottomNav() {
                 className="w-full flex items-center justify-center px-4 py-3 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
                 onClick={() => {
                   localStorage.removeItem('jwt');
-                  setAuth({});
+                  setAuth("");
+                  setUserID("");
                   setShowSettingsModal(false);
                   navigate('/login');
                 }}

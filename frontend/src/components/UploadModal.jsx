@@ -10,6 +10,7 @@ export default function UploadModal({ isOpen, onClose }) {
   const [productTags, setProductTags] = useState([]);
   const [tagPosition, setTagPosition] = useState({ x: 0, y: 0 });
   const [currentTag, setCurrentTag] = useState(null);
+  const [title, setTitle] = useState('');
   
   const fileInputRef = useRef(null);
   const videoRef = useRef(null);
@@ -172,6 +173,7 @@ export default function UploadModal({ isOpen, onClose }) {
     setSelectedImage(null);
     setPreviewUrl(null);
     setProductTags([]);
+    setTitle('');
     stopCamera();
     onClose();
   };
@@ -226,7 +228,7 @@ export default function UploadModal({ isOpen, onClose }) {
               />
             </div>
           ) : (
-            <div>
+            <div className="space-y-4">
               <div className="relative">
                 <img
                   ref={imageRef}
@@ -251,33 +253,45 @@ export default function UploadModal({ isOpen, onClose }) {
                   </button>
                 ))}
               </div>
-              <div className="mt-4 space-y-4">
-                <button 
-                  className={`wearvana-button w-full flex items-center justify-center gap-2 py-3 ${showTagModal ? '!bg-wearvana-accent/10 !text-wearvana-accent' : ''}`}
-                  onClick={() => setShowTagModal(!showTagModal)}
-                >
-                  <LinkIcon className="h-5 w-5" />
-                  <span>
-                    {showTagModal && !currentTag ? 'Selecciona la prenda' : 'Etiquetar productos'}
-                  </span>
-                </button>
-                {productTags.length > 0 && (
-                  <button 
-                    className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
-                    onClick={() => {
-                      // TODO: Implement post creation
-                      console.log('Creating post with:', {
-                        image: selectedImage,
-                        tags: productTags
-                      });
-                      handleClose();
-                    }}
-                  >
-                    <Send className="h-5 w-5" />
-                    <span>Publicar</span>
-                  </button>
-                )}
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                  Título da publicación
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Escribe un título para tu publicación..."
+                  className="wearvana-input w-full"
+                />
               </div>
+              <button 
+                className={`wearvana-button w-full flex items-center justify-center gap-2 py-3 ${showTagModal ? '!bg-wearvana-accent/10 !text-wearvana-accent' : ''}`}
+                onClick={() => setShowTagModal(!showTagModal)}
+              >
+                <LinkIcon className="h-5 w-5" />
+                <span>
+                  {showTagModal && !currentTag ? 'Selecciona la prenda' : 'Etiquetar productos'}
+                </span>
+              </button>
+              {productTags.length > 0 && title.trim() && (
+                <button 
+                  className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
+                  onClick={() => {
+                    // TODO: Implement post creation
+                    console.log('Creating post with:', {
+                      image: selectedImage,
+                      title: title,
+                      tags: productTags
+                    });
+                    handleClose();
+                  }}
+                >
+                  <Send className="h-5 w-5" />
+                  <span>Publicar</span>
+                </button>
+              )}
             </div>
           )}
         </div>

@@ -140,7 +140,7 @@ export default function Explore() {
   const canvasRef = useRef(null);
   const [showPreviewOptions, setShowPreviewOptions] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
-  const { userAlias } = useContext(AuthContext);
+  const { userID } = useContext(AuthContext);
 
   // Fixed dimensions for the photo
   const width = 720;
@@ -221,7 +221,7 @@ export default function Explore() {
     const authClientInstance = new AuthClient();
 
     try {
-      const data = await authClientInstance.imageSearch(file, userAlias);
+      const data = await authClientInstance.imageSearch(file, userID);
     } catch (error) {
       console.log(error);
     } finally {
@@ -283,7 +283,11 @@ export default function Explore() {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
         audio: false,
       });
 

@@ -31,7 +31,16 @@ export default function Register() {
   const handleSubmit = async (e) => {
     let registerToken = null;
 
+    // Load a random image as a file
+    const randomImage = Math.random() < 0.5 ? "/male.png" : "/female.png";
+    const response = await fetch(`/path/to/images/${randomImage}`);
+    const imageBlob = await response.blob();
+    const imageFile = new File([imageBlob], randomImage, { type: imageBlob.type });
+
     const authClientInstance = new AuthClient();
+
+    // Upload the image to the server
+    
     try {
       // Register the alias with AuthClient
       registerToken = await authClientInstance.register(alias, description, "");
