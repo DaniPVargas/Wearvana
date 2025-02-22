@@ -188,15 +188,15 @@ def get_users() -> list[User]:
 async def get_user_info(user_id: str) -> User:
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT user_id, user_alias, description, profile_picture FROM users WHERE id = ?", (user_id,))
+    cursor.execute("SELECT user_id, user_alias, description, profile_picture_url FROM users WHERE id = ?", (user_id,))
     user = cursor.fetchone()
 
-    result = {"user_id": user[0], "user_alias": user[1], "description": user[2], "profile_picture": user[3]}
     conn.close()
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     else:
+        result = {"user_id": user[0], "user_alias": user[1], "description": user[2], "profile_picture": user[3]}
         return result
 
 
@@ -287,7 +287,7 @@ async def create_post(upload_post_body: UploadPostBody) -> dict[str, str]:
     image_url = upload_post_body.image_url
     tags = upload_post_body.tags
 
-    cursor.execute("INSERT INTO posts (user_id, followed_id) VALUES (?, ?)", (user_id, ))
+    cursor.execute("INSERT INTO posts (user_id, image_url) VALUES (?, ?)", (user_id, image_url))
 
     for t in tags:
         post_id = cursor.lastrowid
