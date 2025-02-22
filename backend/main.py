@@ -89,6 +89,8 @@ async def authenticate(body: AuthBody) -> VerifiedUser:
 async def create_user(user_alias: str) -> Any:
     user_id = str(uuid.uuid4())
 
+    # TODO: Guardar en BDD usuario y datos
+
     register_token = RegisterToken(user_id=user_id, username=user_alias, aliases=[user_alias])
 
     try:
@@ -224,8 +226,10 @@ async def search_clothing_by_image(user_id: str = Form(...), file: UploadFile = 
     response =  requests.get(f"{settings.inditex_image_search_url}?image={params['image']}", headers=headers)
     response.raise_for_status()
 
+    print(f"{settings.inditex_image_search_url}?image={params['image']}")
     print(params)
     print(response)
+    print(response.text)
     print(response.json())
     references = []
 
