@@ -124,11 +124,11 @@ async def upload_picture(user_id: str, file: UploadFile = File(...)) -> dict[str
 ## API Inditex
 
 @app.post("/clothing:text_search")
-async def search_clothing() -> list[Reference]:
+async def search_clothing(query: str, brand: str) -> list[Reference]:
 
     params = {
-        "query": "shirt",
-        "brand": "zara"
+        "query": query,
+        "brand": brand
     }
 
     headers = {
