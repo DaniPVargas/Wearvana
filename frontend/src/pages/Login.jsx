@@ -3,6 +3,7 @@ import authContext from "../context/AuthProvider";
 import * as Passwordless from "@passwordlessdev/passwordless-client";
 import AuthClient from "../services/AuthClient";
 import { ToastContainer } from "react-toastify";
+import { Link } from "react-router-dom";
 
 // import {
 //   PASSWORDLESS_API_KEY,
@@ -47,23 +48,25 @@ export default function LoginPage() {
           </p>
         )}
         {success ? (
-          <h1 className="text-2xl font-semibold text-center">
-            You are logged in!
-          </h1>
+          <h1 className="text-2xl font-semibold text-center">Fixeches login</h1>
         ) : (
           <>
-            <h1 className="text-2xl font-semibold text-center mb-4">Sign In</h1>
+            <img
+              src="/logo.svg"
+              alt="Logo"
+              className="mx-auto mb-6 w-24 h-24 "
+            />
             <button
               onClick={handleSubmit}
               className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
             >
-              Sign In
+              Iniciar sesión
             </button>
             <p className="mt-4 text-center text-sm text-gray-500">
-              Need an account?{" "}
-              <a href="#" className="text-ig-link hover:underline">
-                Sign Up
-              </a>
+              Aínda non tes unha conta?{" "}
+              <Link to="/register" className="text-ig-link hover:underline">
+                Crea unha conta
+              </Link>
             </p>
           </>
         )}

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import * as Passwordless from "@passwordlessdev/passwordless-client";
 import { ToastContainer, toast } from "react-toastify";
 import AuthClient from "../services/AuthClient";
+import { Link } from "react-router-dom";
 
 export default function RegisterPage() {
   const aliasRef = useRef();
@@ -62,7 +63,7 @@ export default function RegisterPage() {
               {errMsg}
             </p>
           )}
-          <h1 className="text-2xl font-semibold text-center mb-4">Register</h1>
+          <img src="/logo.svg" alt="Logo" className="mx-auto mb-6 w-24 h-24 " />
           <div className="mb-4">
             <input
               type="text"
@@ -80,13 +81,13 @@ export default function RegisterPage() {
             onClick={handleSubmit}
             className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
           >
-            Register
+            Crea unha conta
           </button>
           <p className="mt-4 text-center text-sm text-gray-500">
-            Already registered?{" "}
-            <a href="#" className="text-ig-link hover:underline">
-              Sign in
-            </a>
+            Xa estás rexistrado?{" "}
+            <Link to="/login" className="text-ig-link hover:underline">
+              Inicia sesión
+            </Link>
           </p>
           <ToastContainer />
         </section>
