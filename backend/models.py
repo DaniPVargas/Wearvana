@@ -30,8 +30,8 @@ class AuthBody(BaseModel):
 
 class CreateUserBody(BaseModel):
     user_alias: str
-    description: str
-    profile_picture_url: str
+    description: Optional[str] = None
+    profile_picture_url: Optional[str] = None
 
 class FollowUserBody(BaseModel):
     follower_id: str
