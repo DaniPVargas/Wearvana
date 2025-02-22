@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 class Reference(BaseModel):
-    name: str
+    clothing_name: str
     link: str
     current_price: float
     original_price: Optional[float]
@@ -10,12 +10,12 @@ class Reference(BaseModel):
 
 
 class Tag(Reference):
-    x: int
-    y: int
+    x_coord: int
+    y_coord: int
 
 
 class Post(BaseModel):
-    id: str
+    post_id: str
     user_id: str
     title: str
     image: str
@@ -23,10 +23,10 @@ class Post(BaseModel):
 
 
 class User(BaseModel):
-    id: str
+    user_id: str
     user_alias: str
     description: str
-    profile_picture: str
+    profile_picture_url: str
 
 class AuthBody(BaseModel):
     token: str

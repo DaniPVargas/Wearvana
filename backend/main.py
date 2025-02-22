@@ -139,7 +139,8 @@ def get_db():
 @app.post("/auth")
 def authenticate(body: AuthBody) -> VerifiedUser:
     verify_sign_in = VerifySignIn(body.token)
-    return passwordless_client.sign_in(verify_sign_in)
+    authenticated_user = passwordless_client.sign_in(verify_sign_in)
+    return authenticated_user
 
 
 @app.post("/users")
@@ -217,7 +218,9 @@ async def get_user_posts(user_id: str) -> list[Post]:
 
         for t in tags:
             posts_results[-1]["tags"].append(
-                {"x_coord": t["x_coord"], 
+                {"tag_id": t["tag_id"],
+                 "post_id": t["post_id"],
+                 "x_coord": t["x_coord"], 
                  "y_coord": t["y_coord"], 
                  "clothing_name": t["clothing_name"], 
                  "current_price": t["current_price"], 
