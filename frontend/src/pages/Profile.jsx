@@ -1,9 +1,36 @@
-import { Settings, MapPin, Link as LinkIcon } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Settings, MapPin, Link as LinkIcon, X, Moon, Sun, ChevronDown } from 'lucide-react';
+import { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import authContext from '../context/AuthProvider';
 import Skeleton from '../components/Skeleton';
 
 export default function Profile() {
+  const navigate = useNavigate();
+  const { setAuth } = useContext(authContext);
   const [isLoading, setIsLoading] = useState(true);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [showLanguages, setShowLanguages] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState('Galego');
+  
+  const languages = [
+    { code: 'gl', name: 'Galego' },
+    { code: 'eu', name: 'Euskara' },
+    { code: 'es', name: 'Español' },
+    { code: 'en', name: 'English' }
+  ];
+
+  // Add scroll lock effect
+  useEffect(() => {
+    if (showSettingsModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showSettingsModal]);
 
   // Simulate loading on mount
   useEffect(() => {
@@ -101,10 +128,11 @@ export default function Profile() {
               </div>
             </div>
             <button 
-              className="wearvana-button flex items-center gap-2 self-start md:self-center"
+              onClick={() => setShowSettingsModal(true)}
+              className="md:hidden wearvana-button flex items-center gap-2 self-start"
             >
               <Settings size={16} />
-              <span>Editar</span>
+              <span>Axustes</span>
             </button>
           </div>
 
@@ -164,6 +192,74 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowSettingsModal(false);
+            }
+          }}
+        >
+          <div className="bg-white w-full max-w-sm rounded-xl overflow-hidden">
+            <div className="border-b border-gray-200 p-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Axustes</h2>
+              <button 
+                onClick={() => setShowSettingsModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <button 
+                className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors"
+                onClick={() => {
+                  setIsDarkMode(!isDarkMode);
+                  // Theme toggle logic will be implemented later
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  {isDarkMode ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                  <span>Modo escuro</span>
+                </div>
+                <span className="text-sm text-gray-500">{isDarkMode ? 'On' : 'Off'}</span>
+              </button>
+              <div className="w-full px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <span>Idioma</span>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={currentLanguage}
+                      onChange={(e) => setCurrentLanguage(e.target.value)}
+                      className="text-sm text-gray-500 bg-transparent border-none focus:outline-none cursor-pointer"
+                    >
+                      {languages.map((lang) => (
+                        <option key={lang.code} value={lang.code}>
+                          {lang.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <button 
+                className="w-full flex items-center justify-center px-4 py-3 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                onClick={() => {
+                  localStorage.removeItem('jwt');
+                  setAuth({});
+                  setShowSettingsModal(false);
+                  navigate('/login');
+                }}
+              >
+                <span>Pechar sesión</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

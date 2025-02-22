@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { Upload, Camera, Image, X, Plus, Link as LinkIcon } from "lucide-react"
+import { Upload, Camera, Image, X, Plus, Link as LinkIcon, Settings } from "lucide-react"
 import Post from "../components/Post"
 
 const generatePost = (id) => ({
@@ -69,6 +69,17 @@ export default function Home() {
 
     return () => observer.disconnect()
   }, [loading])
+
+  useEffect(() => {
+    if (showUploadModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showUploadModal]);
 
   const handleImageUpload = (e) => {
     e.preventDefault();
@@ -175,28 +186,27 @@ export default function Home() {
   };
 
   const handleImageClick = (e) => {
-    if (!imageRef.current) return;
+    if (!imageRef.current || !showTagModal) return;
 
     const rect = imageRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     
     setTagPosition({ x, y });
-    setShowTagModal(true);
-    setCurrentTag(null);
+    setCurrentTag('new'); // Use 'new' to indicate we're creating a new tag
   };
 
   const handleAddTag = (tag) => {
-    if (currentTag !== null) {
+    if (currentTag === 'new') {
+      // Add new tag
+      setProductTags(tags => [...tags, { ...tag, position: tagPosition }]);
+    } else if (typeof currentTag === 'number') {
       // Edit existing tag
       setProductTags(tags => 
         tags.map((t, i) => i === currentTag ? { ...t, ...tag } : t)
       );
-    } else {
-      // Add new tag
-      setProductTags(tags => [...tags, { ...tag, position: tagPosition }]);
     }
-    setShowTagModal(false);
+    setCurrentTag(null); // This will close the details modal but keep the tagging mode active
   };
 
   const handleRemoveTag = (index) => {
@@ -216,21 +226,21 @@ export default function Home() {
           {/* Main Feed */}
           <div className="flex-grow max-w-[630px]">
             <div className="max-w-[470px] mx-auto md:mx-0">
-      {posts.map((post) => (
-        <Post key={post.id} {...post} />
-      ))}
+              {posts.map((post) => (
+                <Post key={post.id} {...post} />
+              ))}
 
-      <div 
-        ref={observerTarget}
-        className="h-10 flex items-center justify-center"
-      >
-        {loading ? (
-          <div className="text-gray-400">Loading more posts...</div>
-        ) : (
-          <div className="h-1 w-1" /> // Invisible element for intersection observer
-        )}
-      </div>
-    </div>
+              <div 
+                ref={observerTarget}
+                className="h-10 flex items-center justify-center"
+              >
+                {loading ? (
+                  <div className="text-gray-400">Loading more posts...</div>
+                ) : (
+                  <div className="h-1 w-1" /> // Invisible element for intersection observer
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Empty sidebar placeholder for layout balance */}
@@ -249,7 +259,18 @@ export default function Home() {
 
       {/* Upload Modal */}
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div 
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowUploadModal(false);
+              setSelectedImage(null);
+              setPreviewUrl(null);
+              setProductTags([]);
+              stopCamera();
+            }
+          }}
+        >
           <div className="bg-white w-full max-w-lg rounded-xl overflow-hidden">
             {/* Modal Header */}
             <div className="border-b border-gray-200 p-4 flex items-center justify-between">
@@ -303,6 +324,7 @@ export default function Home() {
                       alt="Preview"
                       className="w-full aspect-square object-cover rounded-lg"
                       onClick={handleImageClick}
+                      style={{ cursor: showTagModal ? 'crosshair' : 'default' }}
                     />
                     {/* Product Tags */}
                     {productTags.map((tag, index) => (
@@ -321,31 +343,14 @@ export default function Home() {
                   </div>
                   <div className="mt-4 space-y-4">
                     <button 
-                      className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
-                      onClick={() => setShowTagModal(true)}
+                      className={`wearvana-button w-full flex items-center justify-center gap-2 py-3 ${showTagModal ? '!bg-wearvana-accent/10 !text-wearvana-accent' : ''}`}
+                      onClick={() => setShowTagModal(!showTagModal)}
                     >
                       <LinkIcon className="h-5 w-5" />
-                      <span>Etiquetar productos</span>
+                      <span>
+                        {showTagModal && !currentTag ? 'Selecciona la prenda' : 'Etiquetar productos'}
+                      </span>
                     </button>
-                    {productTags.length > 0 && (
-                      <div className="space-y-2">
-                        <h3 className="font-medium">Productos etiquetados:</h3>
-                        {productTags.map((tag, index) => (
-                          <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                            <div>
-                              <p className="font-medium">{tag.name}</p>
-                              <p className="text-sm text-gray-500">{tag.price}€</p>
-                            </div>
-                            <button
-                              onClick={() => handleRemoveTag(index)}
-                              className="text-gray-400 hover:text-gray-600"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -355,10 +360,19 @@ export default function Home() {
       )}
 
       {/* Tag Modal */}
-      {showTagModal && (
-        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+      {showTagModal && currentTag !== null && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setCurrentTag(null);
+            }
+          }}
+        >
           <div className="bg-white w-full max-w-sm rounded-xl p-6">
-            <h3 className="text-lg font-semibold mb-4">Añadir producto</h3>
+            <h3 className="text-lg font-semibold mb-4">
+              {typeof currentTag === 'number' ? 'Editar producto' : 'Detalles del producto'}
+            </h3>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -378,7 +392,7 @@ export default function Home() {
                   name="name"
                   className="wearvana-input"
                   required
-                  defaultValue={currentTag !== null ? productTags[currentTag].name : ''}
+                  defaultValue={currentTag !== null && typeof currentTag === 'number' ? productTags[currentTag].name : ''}
                 />
               </div>
               <div>
@@ -389,7 +403,7 @@ export default function Home() {
                   step="0.01"
                   className="wearvana-input"
                   required
-                  defaultValue={currentTag !== null ? productTags[currentTag].price : ''}
+                  defaultValue={currentTag !== null && typeof currentTag === 'number' ? productTags[currentTag].price : ''}
                 />
               </div>
               <div>
@@ -399,13 +413,25 @@ export default function Home() {
                   name="link"
                   className="wearvana-input"
                   required
-                  defaultValue={currentTag !== null ? productTags[currentTag].link : ''}
+                  defaultValue={currentTag !== null && typeof currentTag === 'number' ? productTags[currentTag].link : ''}
                 />
               </div>
               <div className="flex gap-2 pt-2">
+                {typeof currentTag === 'number' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleRemoveTag(currentTag);
+                      setCurrentTag(null);
+                    }}
+                    className="flex-1 py-2 px-4 border border-red-200 text-red-600 rounded-lg hover:bg-red-50"
+                  >
+                    Eliminar
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={() => setShowTagModal(false)}
+                  onClick={() => setCurrentTag(null)}
                   className="flex-1 py-2 px-4 border border-gray-200 rounded-lg hover:bg-gray-50"
                 >
                   Cancelar
