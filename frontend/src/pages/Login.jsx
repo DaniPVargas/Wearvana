@@ -28,7 +28,7 @@ export default function LoginPage() {
       const token = await passwordless.signinWithDiscoverable();
       if (!token) {
         setErrMsg(
-          "Non tes unha passkey asociada a este navegador. Por favor, inicia sesión."
+          "Non tes unha passkey asociada a este navegador.\nPor favor, inicia sesión"
         );
         return;
       }

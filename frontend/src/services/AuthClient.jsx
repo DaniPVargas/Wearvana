@@ -1,7 +1,6 @@
 export default class AuthClient {
   constructor() {
-    // this.apiBaseUrl = "https://wearvana.onrender.com";
-    this.apiBaseUrl = "http://localhost:5000";
+    this.apiBaseUrl = "https://wearvana.onrender.com";
   }
 
   async signIn(token) {
@@ -20,7 +19,7 @@ export default class AuthClient {
 
       return await response.json();
     } catch (error) {
-      console.error("Erro iniciando sesion", error);
+      console.error("Erro ao iniciar sesión", error);
       throw error;
     }
   }
