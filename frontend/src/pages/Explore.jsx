@@ -140,6 +140,7 @@ export default function Explore() {
   const canvasRef = useRef(null);
   const [showPreviewOptions, setShowPreviewOptions] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
+  const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
   const { userID } = useContext(AuthContext);
 
   // Fixed dimensions for the photo
@@ -153,7 +154,14 @@ export default function Explore() {
     "Chaqueta de cuero negra...",
     "Zapatos para una boda...",
     "Sudadera oversize gris...",
+    "Camiseta para el gimnasio...",
   ];
+
+  // Set random initial suggestion when component mounts
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * searchSuggestions.length);
+    setCurrentSuggestionIndex(randomIndex);
+  }, []);
 
   // Mock data - would come from API
   const products = [
@@ -285,8 +293,9 @@ export default function Explore() {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'environment',
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
+          width: { ideal: 720 },
+          height: { ideal: 1280 },
+          aspectRatio: { ideal: 9/16 }
         },
         audio: false,
       });
@@ -476,7 +485,7 @@ export default function Explore() {
                     <div className="absolute left-10 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                       {!searchQuery && (
                         <TypewriterPlaceholder
-                          suggestions={searchSuggestions}
+                          suggestions={[searchSuggestions[currentSuggestionIndex]]}
                         />
                       )}
                     </div>

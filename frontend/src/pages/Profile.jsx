@@ -175,7 +175,7 @@ export default function Profile() {
 
         {/* Items Grid */}
         <div className="bg-white rounded-xl p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-6">Mis Artículos</h2>
+          <h2 className="text-xl font-semibold mb-6">Mis Publicaciones</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {items.map((item) => (
               <div key={item.id} className="relative aspect-square group">
