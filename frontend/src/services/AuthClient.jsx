@@ -14,7 +14,7 @@ export default class AuthClient {
       });
 
       if (!response.ok) {
-        throw new Error("Autenticación fallida");
+        throw new Error("Erro ao iniciar sesión");
       }
 
       return await response.json();
@@ -38,12 +38,30 @@ export default class AuthClient {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Erro rexistrando o usuario");
+        throw new Error(errorData.error || "Erro ao rexistrar o usuario");
       }
 
       return await response.json();
     } catch (error) {
       throw error;
     }
+  }
+
+  async textSearch(query, brand) {
+    const response = await fetch(
+      `${this.apiBaseUrl}/clothing:text_search?query=${query}?brand=${brand}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Non se puideron obter resultados");
+    }
+
+    return await response.json();
   }
 }

@@ -1,9 +1,28 @@
-import { useState, useRef, useEffect } from 'react';
-import { Search, Upload, SearchX, X, Camera, Image, RotateCcw, ChevronDown, Send } from 'lucide-react';
-import Skeleton from '../components/Skeleton';
-import TypewriterPlaceholder from '../components/TypewriterPlaceholder';
+import { useState, useRef, useEffect } from "react";
+import {
+  Search,
+  Upload,
+  SearchX,
+  X,
+  Camera,
+  Image,
+  RotateCcw,
+  ChevronDown,
+  Send,
+} from "lucide-react";
+import Skeleton from "../components/Skeleton";
+import TypewriterPlaceholder from "../components/TypewriterPlaceholder";
+import AuthClient from "../services/AuthClient";
 
-function ProductCard({ image, name, price, link, brand, loading }) {
+function ProductCard({
+  image,
+  name,
+  current_price,
+  original_price,
+  link,
+  brand,
+  loading,
+}) {
   if (loading) {
     return (
       <div className="flex flex-col">
@@ -15,10 +34,10 @@ function ProductCard({ image, name, price, link, brand, loading }) {
   }
 
   return (
-    <a 
+    <a
       href={link}
       target="_blank"
-      rel="noopener noreferrer" 
+      rel="noopener noreferrer"
       className="flex flex-col group hover:shadow-lg transition-shadow duration-200 rounded-lg p-2"
     >
       <div className="aspect-[3/4] bg-wearvana-light rounded-lg mb-2 flex items-center justify-center">
@@ -28,7 +47,7 @@ function ProductCard({ image, name, price, link, brand, loading }) {
         {name}
       </h3>
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold">{price.value.current}€</p>
+        <p className="text-sm font-semibold">{current_price}€</p>
         <span className="text-xs text-wearvana-muted capitalize">{brand}</span>
       </div>
     </a>
@@ -47,62 +66,62 @@ function EmptyState({ message }) {
 // Add mock data at the top of the file, after imports
 const MOCK_SEARCH_RESULTS = [
   {
-    "id": "367022517",
-    "name": "GEOMETRIC JACQUARD SHIRT",
-    "price": {
-      "currency": "EUR",
-      "value": {
-        "current": 29.95
-      }
+    id: "367022517",
+    name: "GEOMETRIC JACQUARD SHIRT",
+    price: {
+      currency: "EUR",
+      value: {
+        current: 29.95,
+      },
     },
-    "link": "https://www.zara.com/es/en/geometric-jacquard-shirt-p01618475.html?v1=367022517",
-    "brand": "zara"
+    link: "https://www.zara.com/es/en/geometric-jacquard-shirt-p01618475.html?v1=367022517",
+    brand: "zara",
   },
   {
-    "id": "364086315",
-    "name": "COTTON - LINEN SHIRT",
-    "price": {
-      "currency": "EUR",
-      "value": {
-        "current": 29.95
-      }
+    id: "364086315",
+    name: "COTTON - LINEN SHIRT",
+    price: {
+      currency: "EUR",
+      value: {
+        current: 29.95,
+      },
     },
-    "link": "https://www.zara.com/es/en/cotton---linen-shirt-p01063402.html?v1=364086315",
-    "brand": "zara"
-  }
+    link: "https://www.zara.com/es/en/cotton---linen-shirt-p01063402.html?v1=364086315",
+    brand: "zara",
+  },
 ];
 
 // Add mock data for image search
 const MOCK_IMAGE_SEARCH_RESULTS = [
   {
-    "id": "367022517",
-    "name": "GEOMETRIC JACQUARD SHIRT",
-    "price": {
-      "currency": "EUR",
-      "value": {
-        "current": 29.95
-      }
+    id: "367022517",
+    name: "GEOMETRIC JACQUARD SHIRT",
+    price: {
+      currency: "EUR",
+      value: {
+        current: 29.95,
+      },
     },
-    "link": "https://www.zara.com/es/en/geometric-jacquard-shirt-p01618475.html?v1=367022517",
-    "brand": "zara"
+    link: "https://www.zara.com/es/en/geometric-jacquard-shirt-p01618475.html?v1=367022517",
+    brand: "zara",
   },
   {
-    "id": "364086315",
-    "name": "COTTON - LINEN SHIRT",
-    "price": {
-      "currency": "EUR",
-      "value": {
-        "current": 29.95
-      }
+    id: "364086315",
+    name: "COTTON - LINEN SHIRT",
+    price: {
+      currency: "EUR",
+      value: {
+        current: 29.95,
+      },
     },
-    "link": "https://www.zara.com/es/en/cotton---linen-shirt-p01063402.html?v1=364086315",
-    "brand": "zara"
-  }
+    link: "https://www.zara.com/es/en/cotton---linen-shirt-p01063402.html?v1=364086315",
+    brand: "zara",
+  },
 ];
 
 export default function Explore() {
-  const [activeTab, setActiveTab] = useState('search');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState("search");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [hasUploaded, setHasUploaded] = useState(false);
@@ -120,7 +139,7 @@ export default function Explore() {
   const canvasRef = useRef(null);
   const [showPreviewOptions, setShowPreviewOptions] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
-  
+
   // Fixed dimensions for the photo
   const width = 720;
   let height = 0;
@@ -140,28 +159,41 @@ export default function Explore() {
       id: 1,
       name: "Oversized Blazer",
       price: 49.99,
-      image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-HbpRL3prpms6Fn7t544TSccClzI2lb.png"
+      image:
+        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-HbpRL3prpms6Fn7t544TSccClzI2lb.png",
     },
     {
       id: 2,
       name: "Linen Blend Shirt",
       price: 29.99,
-      image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-HbpRL3prpms6Fn7t544TSccClzI2lb.png"
+      image:
+        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-HbpRL3prpms6Fn7t544TSccClzI2lb.png",
     },
   ];
 
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
-    
+
     setIsLoading(true);
     setHasSearched(true);
 
-    // Simulate API delay
-    setTimeout(() => {
-      setSearchResults(MOCK_SEARCH_RESULTS);
+    const authClientInstance = new AuthClient();
+
+    try {
+      const data = await authClientInstance.textSearch(searchQuery);
+      setSearchResults(data);
+    } catch (error) {
+      console.log("Error: ", error);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
+
+    // // Simulate API delay
+    // setTimeout(() => {
+    //   setSearchResults(MOCK_SEARCH_RESULTS);
+    //   setIsLoading(false);
+    // }, 1000);
 
     // Comment out the actual API call for now
     /*
@@ -232,13 +264,13 @@ export default function Explore() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      alert('Por favor, selecciona una imagen.');
+    if (!file.type.startsWith("image/")) {
+      alert("Por favor, selecciona una imagen.");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('La imagen no puede superar los 5MB.');
+      alert("La imagen no puede superar los 5MB.");
       return;
     }
 
@@ -253,26 +285,27 @@ export default function Explore() {
     try {
       setShowCamera(true);
       setShowModal(false);
-      
-      await new Promise(resolve => setTimeout(resolve, 100));
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
-        audio: false
+        audio: false,
       });
-      
+
       if (!videoRef.current) {
-        throw new Error('Video element not found');
+        throw new Error("Video element not found");
       }
 
       videoRef.current.srcObject = stream;
       streamRef.current = stream;
-      
-      videoRef.current.addEventListener('canplay', function handleCanPlay() {
-        videoRef.current.removeEventListener('canplay', handleCanPlay);
-        
-        height = videoRef.current.videoHeight / (videoRef.current.videoWidth / width);
-        
+
+      videoRef.current.addEventListener("canplay", function handleCanPlay() {
+        videoRef.current.removeEventListener("canplay", handleCanPlay);
+
+        height =
+          videoRef.current.videoHeight / (videoRef.current.videoWidth / width);
+
         if (isNaN(height)) {
           height = width / (4 / 3);
         }
@@ -284,19 +317,24 @@ export default function Explore() {
           canvasRef.current.setAttribute("height", height);
         }
 
-        videoRef.current.play()
+        videoRef.current
+          .play()
           .then(() => {
             setStreaming(true);
             setCameraError(null);
           })
-          .catch(err => {
-            console.error('Error playing video:', err);
-            setCameraError('Error al iniciar la cámara. Por favor, recarga la página.');
+          .catch((err) => {
+            console.error("Error playing video:", err);
+            setCameraError(
+              "Error al iniciar la cámara. Por favor, recarga la página."
+            );
           });
       });
     } catch (err) {
-      console.error('Error accessing camera:', err);
-      setCameraError('No se pudo acceder a la cámara. Por favor, permite el acceso.');
+      console.error("Error accessing camera:", err);
+      setCameraError(
+        "No se pudo acceder a la cámara. Por favor, permite el acceso."
+      );
       setShowCamera(false);
     }
   };
@@ -304,13 +342,13 @@ export default function Explore() {
   const capturePhoto = () => {
     try {
       if (!videoRef.current || !canvasRef.current) {
-        console.error('Video or canvas element not found');
+        console.error("Video or canvas element not found");
         return;
       }
 
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      
+
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
 
@@ -320,28 +358,34 @@ export default function Explore() {
       setFlash(true);
       setTimeout(() => setFlash(false), 200);
 
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          console.error('Failed to capture photo');
-          return;
-        }
+      canvas.toBlob(
+        async (blob) => {
+          if (!blob) {
+            console.error("Failed to capture photo");
+            return;
+          }
 
-        const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
-        setSelectedImage(file);
-        setPreviewUrl(URL.createObjectURL(blob));
-        setHasUploaded(true);
-        stopCamera();
-        await searchByImage(file);
-      }, 'image/jpeg', 0.8);
+          const file = new File([blob], "photo.jpg", { type: "image/jpeg" });
+          setSelectedImage(file);
+          setPreviewUrl(URL.createObjectURL(blob));
+          setHasUploaded(true);
+          stopCamera();
+          await searchByImage(file);
+        },
+        "image/jpeg",
+        0.8
+      );
     } catch (error) {
-      console.error('Error capturing photo:', error);
-      setCameraError('Error al capturar la foto. Por favor, inténtalo de nuevo.');
+      console.error("Error capturing photo:", error);
+      setCameraError(
+        "Error al capturar la foto. Por favor, inténtalo de nuevo."
+      );
     }
   };
 
   const stopCamera = () => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
     if (videoRef.current) {
@@ -373,12 +417,13 @@ export default function Explore() {
     setHasUploaded(false);
     stopCamera();
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
-  const shouldShowProducts = (activeTab === 'search' && hasSearched) || 
-                           (activeTab === 'inspiration' && hasUploaded);
+  const shouldShowProducts =
+    (activeTab === "search" && hasSearched) ||
+    (activeTab === "inspiration" && hasUploaded);
 
   return (
     <div className="pb-4 min-h-screen bg-gray-50">
@@ -389,21 +434,21 @@ export default function Explore() {
             <div className="flex border-b border-gray-200 relative">
               <button
                 className={`flex-1 py-3 text-center font-medium ${
-                  activeTab === 'search'
-                    ? 'text-wearvana-accent'
-                    : 'text-wearvana-muted'
+                  activeTab === "search"
+                    ? "text-wearvana-accent"
+                    : "text-wearvana-muted"
                 }`}
-                onClick={() => setActiveTab('search')}
+                onClick={() => setActiveTab("search")}
               >
                 Buscar
               </button>
               <button
                 className={`flex-1 py-3 text-center font-medium ${
-                  activeTab === 'inspiration'
-                    ? 'text-wearvana-accent'
-                    : 'text-wearvana-muted'
+                  activeTab === "inspiration"
+                    ? "text-wearvana-accent"
+                    : "text-wearvana-muted"
                 }`}
-                onClick={() => setActiveTab('inspiration')}
+                onClick={() => setActiveTab("inspiration")}
               >
                 Inspiración
               </button>
@@ -411,8 +456,8 @@ export default function Explore() {
               <div
                 className="absolute bottom-0 h-0.5 bg-wearvana-accent transition-all duration-300 ease-in-out"
                 style={{
-                  left: activeTab === 'search' ? '0' : '50%',
-                  width: '50%'
+                  left: activeTab === "search" ? "0" : "50%",
+                  width: "50%",
                 }}
               />
             </div>
@@ -420,7 +465,7 @@ export default function Explore() {
         </div>
 
         {/* Search Tab Content */}
-        {activeTab === 'search' && (
+        {activeTab === "search" && (
           <div className="px-4 max-w-2xl mx-auto">
             <form onSubmit={handleSearch} className="mb-6 pt-4">
               <div className="relative">
@@ -433,7 +478,9 @@ export default function Explore() {
                     placeholder=""
                   />
                   <div className="absolute left-10 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                    {!searchQuery && <TypewriterPlaceholder suggestions={searchSuggestions} />}
+                    {!searchQuery && (
+                      <TypewriterPlaceholder suggestions={searchSuggestions} />
+                    )}
                   </div>
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <button
@@ -449,7 +496,7 @@ export default function Explore() {
         )}
 
         {/* Inspiration Tab Content */}
-        {activeTab === 'inspiration' && (
+        {activeTab === "inspiration" && (
           <div className="px-4 mb-6 max-w-2xl mx-auto pt-4">
             <input
               type="file"
@@ -465,13 +512,13 @@ export default function Explore() {
                   autoPlay
                   playsInline
                   muted
-                  style={{ 
-                    width: '100%',
-                    height: '100%',
-                    minHeight: '400px',
-                    maxHeight: '80vh',
-                    objectFit: 'cover',
-                    backgroundColor: 'black'
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    minHeight: "400px",
+                    maxHeight: "80vh",
+                    objectFit: "cover",
+                    backgroundColor: "black",
                   }}
                   className="rounded-lg"
                 />
@@ -482,10 +529,7 @@ export default function Explore() {
                   <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
                     <div className="text-white text-center px-4">
                       <p className="mb-4">{cameraError}</p>
-                      <button
-                        onClick={stopCamera}
-                        className="wearvana-button"
-                      >
+                      <button onClick={stopCamera} className="wearvana-button">
                         Cerrar
                       </button>
                     </div>
@@ -496,7 +540,7 @@ export default function Explore() {
                       <button
                         onClick={stopCamera}
                         className="p-3 bg-white/90 rounded-full text-black shadow-lg hover:bg-white"
-                        style={{ backdropFilter: 'blur(4px)' }}
+                        style={{ backdropFilter: "blur(4px)" }}
                       >
                         <X className="h-5 w-5" />
                       </button>
@@ -504,10 +548,10 @@ export default function Explore() {
                         <button
                           onClick={capturePhoto}
                           className="p-2 bg-white/90 rounded-full shadow-lg hover:bg-white transform active:scale-95 transition-transform"
-                          style={{ 
-                            width: '64px', 
-                            height: '64px',
-                            backdropFilter: 'blur(4px)'
+                          style={{
+                            width: "64px",
+                            height: "64px",
+                            backdropFilter: "blur(4px)",
                           }}
                         >
                           <div className="w-full h-full rounded-full border-4 border-black/20" />
@@ -561,7 +605,7 @@ export default function Explore() {
                 )}
               </div>
             ) : (
-              <button 
+              <button
                 onClick={() => setShowModal(true)}
                 className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
               >
@@ -574,7 +618,7 @@ export default function Explore() {
 
         {/* Upload Options Modal */}
         {showModal && (
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center pb-4"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
@@ -584,22 +628,24 @@ export default function Explore() {
           >
             <div className="bg-white w-full max-w-sm rounded-t-xl p-4">
               <div className="flex flex-col gap-4">
-                <h3 className="text-lg font-semibold text-center mb-2">Subir foto</h3>
-                <button 
+                <h3 className="text-lg font-semibold text-center mb-2">
+                  Subir foto
+                </h3>
+                <button
                   onClick={startCamera}
                   className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
                 >
                   <Camera className="h-5 w-5" />
                   <span>Hacer foto</span>
                 </button>
-                <button 
+                <button
                   onClick={handleImageUpload}
                   className="wearvana-button w-full flex items-center justify-center gap-2 py-3 !bg-white !text-black border border-gray-200"
                 >
                   <Image className="h-5 w-5" />
                   <span>Subir de galería</span>
                 </button>
-                <button 
+                <button
                   onClick={() => setShowModal(false)}
                   className="text-gray-500 py-2 font-medium"
                 >
@@ -616,14 +662,15 @@ export default function Explore() {
             {shouldShowProducts ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                 {isLoading
-                  ? Array(6).fill(null).map((_, i) => (
-                      <ProductCard key={i} loading={true} />
-                    ))
-                  : searchResults.map((product) => (
+                  ? Array(6)
+                      .fill(null)
+                      .map((_, i) => <ProductCard key={i} loading={true} />)
+                  : searchResults.map((product, index) => (
                       <ProductCard
-                        key={product.id}
+                        key={index}
                         name={product.name}
-                        price={product.price}
+                        current_price={product.current_price}
+                        original_price={product.original_price}
                         link={product.link}
                         brand={product.brand}
                         loading={false}
@@ -632,9 +679,9 @@ export default function Explore() {
               </div>
             ) : (
               <div className="max-w-2xl mx-auto">
-                <EmptyState 
+                <EmptyState
                   message={
-                    activeTab === 'search' 
+                    activeTab === "search"
                       ? "Busca prendas para ver resultados"
                       : "Sube una foto para encontrar prendas similares"
                   }
@@ -646,10 +693,7 @@ export default function Explore() {
       </div>
 
       {/* Hidden canvas for photo capture */}
-      <canvas
-        ref={canvasRef}
-        className="hidden"
-      />
+      <canvas ref={canvasRef} className="hidden" />
     </div>
   );
-} 
+}
