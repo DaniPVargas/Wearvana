@@ -1,18 +1,17 @@
-import React from "react";
-import { Container, Navbar, Button } from "react-bootstrap";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
+import Layout from "./components/Layout"
+import Home from "./pages/Home"
 
-export const Root = () => {
+function Root() {
   return (
-    <Container fluid className="vh-100">
-      <Container className="main-container vh-100 px-0">
-        <Navbar fixed="bottom" bg="light" className="border-top shadow-lg">
-          <Container className="d-flex justify-content-around">
-            <Button variant="primary">Inicio</Button>
-            <Button variant="secondary">Buscar</Button>
-            <Button variant="success">Perfil</Button>
-          </Container>
-        </Navbar>
-      </Container>
-    </Container>
-  );
-};
+    <Router>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Home />} />
+        </Routes>
+      </Layout>
+    </Router>
+  )
+}
+
+export default Root
