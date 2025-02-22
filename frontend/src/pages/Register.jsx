@@ -36,7 +36,7 @@ export default function RegisterPage() {
 
     if (registerToken) {
 
-        const p = new Passwordless.Client({
+      const p = new Passwordless.Client({
         apiKey: PASSWORDLESS_API_KEY,
         apiUrl: PASSWORDLESS_API_URL,
       });

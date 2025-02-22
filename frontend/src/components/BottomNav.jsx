@@ -1,9 +1,26 @@
-import { Home, Search, User } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Home, Search, User, Settings, X } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useContext } from 'react';
+import authContext from '../context/AuthProvider';
 
 export default function BottomNav() {
   const location = useLocation();
-  
+  const navigate = useNavigate();
+  const { setAuth } = useContext(authContext);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+
+  // Add scroll lock effect
+  useEffect(() => {
+    if (showSettingsModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showSettingsModal]);
+
   const navItems = [
     { icon: Home, label: 'Inicio', path: '/' },
     { icon: Search, label: 'Explorar', path: '/explore' },
@@ -42,7 +59,7 @@ export default function BottomNav() {
         <div className="mb-8 px-3">
           <h1 className="text-xl tracking-widest font-light">WEARVANA</h1>
         </div>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 flex-1">
           {navItems.map(({ icon: Icon, label, path }) => {
             const isActive = location.pathname === path;
             return (
@@ -60,8 +77,53 @@ export default function BottomNav() {
               </Link>
             );
           })}
+          <div className="flex-1" />
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            className="flex items-center gap-4 px-3 py-3 rounded-lg transition-colors text-wearvana-primary hover:bg-gray-50 mt-auto"
+          >
+            <Settings className="h-6 w-6 stroke-1.5" />
+            <span className="text-base">Axustes</span>
+          </button>
         </div>
       </nav>
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowSettingsModal(false);
+            }
+          }}
+        >
+          <div className="bg-white w-full max-w-sm rounded-xl overflow-hidden">
+            <div className="border-b border-gray-200 p-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Axustes</h2>
+              <button 
+                onClick={() => setShowSettingsModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="p-4">
+              <button 
+                className="w-full flex items-center justify-center px-4 py-3 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                onClick={() => {
+                  localStorage.removeItem('jwt');
+                  setAuth({});
+                  setShowSettingsModal(false);
+                  navigate('/login');
+                }}
+              >
+                <span>Pechar sesión</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 } 
