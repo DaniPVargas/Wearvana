@@ -234,5 +234,5 @@ async def search_clothing_by_image(user_id: str = Form(...), file: UploadFile = 
 
 @app.get("/pictures/{user_id}/{picture_id}")
 async def get_picture(user_id: str, picture_id: str) -> dict[str, str]:
-    return FileResponse(f"pictures/{user_id}/{picture_id}.jpg", media_type="image/jpeg")
+    return FileResponse(f"{settings.pictures_dir}/{user_id}/{picture_id}.jpg", media_type="image/jpeg")
 
