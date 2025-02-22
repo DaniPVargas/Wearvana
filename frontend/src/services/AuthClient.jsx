@@ -68,13 +68,17 @@ export default class AuthClient {
     return await response.json();
   }
 
-  async imageSearch(image, userAlias) {
+  async uploadImage(image, userID) {
     const formData = new FormData();
-    formData.append("image", image);
+    formData.append("file", image);
+
+    if (!userID) 
+      throw new Error("O ID do usuario é necesario para subir a imaxe");
+    
 
     // First upload the image to the server
     const uploadResponse = await fetch(
-      `${this.apiBaseUrl}/${userAlias}/pictures`,
+      `${this.apiBaseUrl}/${userID}/pictures`,
       {
         method: "POST",
         body: formData,
@@ -83,10 +87,36 @@ export default class AuthClient {
 
     if (!uploadResponse.ok) {
       throw new Error("Erro ao subir a imaxe");
-    } else {
+    } 
+
       const searchResult = await searchResponse.json();
       const imageUrl = searchResult.image_url;
       console.log("Image URL", imageUrl);
+
+    return imageUrl;
+
+  }
+
+  async imageSearch(image, userID) {
+    const imageUrl = await this.uploadImage(image, userID);
+
+    const searchResponse = await fetch(
+      `${this.apiBaseUrl}/clothing:image_search`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ picture_url: imageUrl }),
+      }
+    );
+
+    if (!searchResponse.ok) {
+      throw new Error("Non se puideron obter resultados");
     }
+
+    const searchResult = await searchResponse.json();
+    console.log("Search result", searchResult);
+    return searchResult;
   }
 }

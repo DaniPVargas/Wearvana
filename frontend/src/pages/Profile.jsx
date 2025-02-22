@@ -6,7 +6,7 @@ import Skeleton from '../components/Skeleton';
 
 export default function Profile() {
   const navigate = useNavigate();
-  const { setAuth } = useContext(authContext);
+  const { setAuth, setUserID } = useContext(authContext);
   const [isLoading, setIsLoading] = useState(true);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
@@ -208,7 +208,8 @@ export default function Profile() {
                 className="w-full flex items-center justify-center px-4 py-3 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
                 onClick={() => {
                   localStorage.removeItem('jwt');
-                  setAuth({});
+                  setAuth("");
+                  setUserID("");
                   setShowSettingsModal(false);
                   navigate('/login');
                 }}
