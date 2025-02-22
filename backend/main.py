@@ -172,24 +172,27 @@ async def search_clothing(query: str, brand: str = "") -> list[Reference]:
         "Content-Type": "application/json",
     }
 
-    response = requests.get(settings.inditex_text_search_url, params=params, headers=headers)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(settings.inditex_text_search_url, params=params, headers=headers) as response:
+            response = await response.json()
+            
+            references = []
 
-    references = []
+            for r in response.json():
+                ref = {
+                    "name": r["name"],
+                    "link": r["link"],
+                    "current_price": r["price"]["value"]["current"],
+                    "original_price": r["price"]["value"]["original"],
+                    "brand": r["brand"],
+                }
+                references.append(ref)
 
-    for r in response.json():
-        ref = {
-            "name": r["name"],
-            "link": r["link"],
-            "current_price": r["price"]["value"]["current"],
-            "original_price": r["price"]["value"]["original"],
-            "brand": r["brand"],
-        }
-        references.append(ref)
-
-    return references
+            return references
+    
 
 @app.post("/users/{user_id}/pictures")
-async def upload_picture(user_id: str, file: UploadFile = File(...)) -> dict[str, str]:
+def upload_picture(user_id: str, file: UploadFile = File(...)) -> dict[str, str]:
     Path(f"{settings.pictures_dir}/{user_id}").mkdir(parents=True, exist_ok=True)
 
     picture_id = str(uuid.uuid4())
@@ -242,5 +245,5 @@ async def search_clothing_by_image(picture_url: str) -> list[Reference]:
 
 
 @app.get("/pictures/{user_id}/{picture_id}")
-async def get_picture(user_id: str, picture_id: str) -> dict[str, str]:
+def get_picture(user_id: str, picture_id: str) -> dict[str, str]:
     return FileResponse(f"{settings.pictures_dir}/{user_id}/{picture_id}.jpg", media_type="image/jpeg")
