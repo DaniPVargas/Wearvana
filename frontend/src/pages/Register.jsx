@@ -1,13 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import * as Passwordless from "@passwordlessdev/passwordless-client";
-import { ToastContainer, toast } from "react-toastify";
+import authContext from "../context/AuthProvider";
 import AuthClient from "../services/AuthClient";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function RegisterPage() {
   const aliasRef = useRef();
   const [alias, setAlias] = useState("");
   const [errMsg, setErrMsg] = useState("");
+  const { setAuth } = useContext(authContext);
+  const navigate = useNavigate();
 
   const PASSWORDLESS_API_KEY =
     "wearvana:public:a72fe9ba831b4292808084b49406b3d3";
@@ -23,20 +25,18 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     let registerToken = null;
-    try {
-      const authClientInstance = new AuthClient();
 
+    const authClientInstance = new AuthClient();
+    try {
       // Register the alias with AuthClient
       registerToken = await authClientInstance.register(alias);
     } catch (error) {
-      toast(error.message, {
-        className: "toast-error",
-      });
+      setErrMsg(error.message);
     }
 
     if (registerToken) {
-      console.log(registerToken);
-      const p = new Passwordless.Client({
+
+        const p = new Passwordless.Client({
         apiKey: PASSWORDLESS_API_KEY,
         apiUrl: PASSWORDLESS_API_URL,
       });
@@ -45,11 +45,12 @@ export default function RegisterPage() {
       const { token, error } = await p.register(registerToken);
 
       if (!error) {
-        toast(`Registered '${alias}'!`);
-        console.log(`Registered '${alias}'!`);
+        const verifiedToken = await authClientInstance.signIn(token);
+        localStorage.setItem("jwt", verifiedToken.jwt);
+        setAuth({ verifiedToken });
+        navigate("/");
       } else {
-        toast(`Couldn't register '${alias}'. Error: ${error}`);
-        console.log("Error registering user", error);
+        setErrMsg(error);
       }
     }
   };
@@ -57,13 +58,12 @@ export default function RegisterPage() {
   return (
     <>
       <div className="max-w-md px-5 mx-auto flex items-center justify-center min-h-screen bg-ig-primary">
-        <section className="w-full mt-8 p-6 bg-white rounded-lg shadow-lg">
-          {errMsg && (
-            <p className="text-red-500 text-sm mb-4" aria-live="assertive">
-              {errMsg}
-            </p>
-          )}
-          <img src="/logo.svg" alt="Logo" className="mx-auto mb-6 w-24 h-24 " />
+        <section className="w-full p-6 bg-white rounded-lg shadow-lg">
+          <img
+            src="/logo.svg"
+            alt="Logo"
+            className="mx-auto mb-16 w-24 h-24 "
+          />
           <div className="mb-4">
             <input
               type="text"
@@ -85,11 +85,18 @@ export default function RegisterPage() {
           </button>
           <p className="mt-4 text-center text-sm text-gray-500">
             Xa estás rexistrado?{" "}
-            <Link to="/login" className="text-ig-link hover:underline">
+            <Link to="/login" className="hover:underline text-wearvana-accent">
               Inicia sesión
             </Link>
           </p>
-          <ToastContainer />
+          {errMsg && (
+            <p
+              className="text-center text-red-500 text-sm mt-2"
+              aria-live="assertive"
+            >
+              {errMsg}
+            </p>
+          )}
         </section>
       </div>
     </>

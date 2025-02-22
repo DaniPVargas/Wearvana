@@ -7,6 +7,7 @@ import { AuthProvider } from "./context/AuthProvider";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Explore from "./pages/Explore";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function Root() {
   return (
@@ -14,12 +15,14 @@ function Root() {
       <Router>
         <Layout>
           <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            {/* <Route element={<ProtectedRoute />}> */}
             <Route path="/" element={<Home />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/user/:username" element={<UserProfile />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
             <Route path="/explore" element={<Explore />} />
+            {/* </Route> */}
           </Routes>
         </Layout>
       </Router>

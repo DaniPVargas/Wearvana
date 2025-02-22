@@ -1,7 +1,6 @@
 export default class AuthClient {
   constructor() {
-    // this.apiBaseUrl = "https://wearvana.onrender.com";
-    this.apiBaseUrl = "http://localhost:5000";
+    this.apiBaseUrl = "https://wearvana.onrender.com";
   }
 
   async signIn(token) {
@@ -20,7 +19,7 @@ export default class AuthClient {
 
       return await response.json();
     } catch (error) {
-      console.error("Erro iniciando sesion", error);
+      console.error("Erro ao iniciar sesión", error);
       throw error;
     }
   }
@@ -46,37 +45,5 @@ export default class AuthClient {
     } catch (error) {
       throw error;
     }
-  }
-
-  async analyzeImage(file) {
-    // Aquí iría la lógica para hacer la llamada a la API en el futuro
-    // Por ahora, devolvemos un mock de datos
-
-    // Simulamos un retraso para imitar una llamada a la API
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Mock de datos
-    const mockResponse = {
-      status: "success",
-      data: [
-        {
-          type: "shirt",
-          color: "blue",
-          brand: "Brand A",
-        },
-        {
-          type: "pants",
-          color: "black",
-          brand: "Brand B",
-        },
-        {
-          type: "shoes",
-          color: "white",
-          brand: "Brand C",
-        },
-      ],
-    };
-
-    return mockResponse;
   }
 }
