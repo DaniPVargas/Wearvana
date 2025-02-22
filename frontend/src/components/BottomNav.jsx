@@ -1,4 +1,4 @@
-import { Home, Search, User, Heart, PlusCircle } from 'lucide-react';
+import { Home, Search, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 export default function BottomNav() {
@@ -7,15 +7,13 @@ export default function BottomNav() {
   const navItems = [
     { icon: Home, label: 'Inicio', path: '/' },
     { icon: Search, label: 'Explorar', path: '/explore' },
-    { icon: PlusCircle, label: 'Publicar', path: '/post' },
-    { icon: Heart, label: 'Favoritos', path: '/favorites' },
     { icon: User, label: 'Perfil', path: '/profile' },
   ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
       <div className="max-w-lg mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-around items-center h-16">
           {navItems.map(({ icon: Icon, label, path }) => {
             const isActive = location.pathname === path;
             return (
