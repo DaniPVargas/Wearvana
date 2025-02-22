@@ -15,12 +15,12 @@ export default class AuthClient {
       });
 
       if (!response.ok) {
-        throw new Error("Authentication failed");
+        throw new Error("Autenticación fallida");
       }
 
       return await response.json();
     } catch (error) {
-      console.error("Error signing in", error);
+      console.error("Erro iniciando sesion", error);
       throw error;
     }
   }
@@ -44,7 +44,6 @@ export default class AuthClient {
 
       return await response.json();
     } catch (error) {
-      console.error("Erro rexistrando o usuario", error);
       throw error;
     }
   }

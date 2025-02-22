@@ -31,7 +31,6 @@ export default function RegisterPage() {
       toast(error.message, {
         className: "toast-error",
       });
-      console.log(error);
     }
 
     if (registerToken) {
