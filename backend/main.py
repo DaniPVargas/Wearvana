@@ -6,6 +6,7 @@ import sqlite3
 import uuid
 from bs4 import BeautifulSoup
 from typing import Any
+from datetime import datetime
 
 from passwordless import (
     PasswordlessClient,
@@ -30,6 +31,18 @@ class Settings(BaseSettings):
     passwordless_dev_secret: str
 
     model_config = SettingsConfigDict(env_file=".env")
+
+class InditexToken:
+    def __init__(self, token_url: str, user_id: str, user_pwd: str):
+        payload = 'scope=technology.catalog.read&grant_type=client_credentials'
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+        res = requests.post(url=token_url, auth=(user_id, user_pwd), headers=headers, data=payload)     
+        res = res.json()
+        self.token = res["id_token"]
+        self.expiry_date = datetime.now() + datetime.timedelta(seconds=res["expires_in"])
+
 
 settings = Settings()
 app = FastAPI()
