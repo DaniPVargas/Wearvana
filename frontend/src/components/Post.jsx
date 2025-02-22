@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Heart, MessageCircle, Bookmark, Share } from "lucide-react"
+import { Heart, Share } from "lucide-react"
+import { Link } from "react-router-dom"
 
 export default function Post({ username, userImage, images, likes, caption }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
@@ -17,8 +18,14 @@ export default function Post({ username, userImage, images, likes, caption }) {
   return (
     <div className="pb-8 mb-4">
       <div className="flex items-center gap-3 px-4 py-3">
-        <div className="w-7 h-7 rounded-full bg-gray-100"></div>
-        <span className="text-sm font-medium">{username}</span>
+        <Link to={`/user/${username}`} className="flex items-center gap-3 hover:opacity-80">
+          <img 
+            src={userImage} 
+            alt={username}
+            className="w-7 h-7 rounded-full object-cover"
+          />
+          <span className="text-sm font-medium">{username}</span>
+        </Link>
         <button className="ml-auto">
           <svg width="16" height="4" viewBox="0 0 16 4" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M2 2H2.01M8 2H8.01M14 2H14.01" stroke="black" strokeWidth="2" strokeLinecap="round"/>
@@ -29,7 +36,7 @@ export default function Post({ username, userImage, images, likes, caption }) {
       <div className="relative aspect-[3/4] bg-gray-50">
         <img
           src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-HbpRL3prpms6Fn7t544TSccClzI2lb.png"
-          alt="Minimal style clothing"
+          alt={`${username}'s post`}
           className="object-cover w-full h-full"
         />
       </div>
@@ -46,10 +53,12 @@ export default function Post({ username, userImage, images, likes, caption }) {
           </div>
         </div>
         <div className="text-sm">
-          <p className="font-medium mb-1">{likes || "2345"} likes</p>
+          <p className="font-medium mb-1">{likes} likes</p>
           <p>
-            <span className="font-medium">{username || "minimal_style"}</span>{" "}
-            {caption || "Minimal vibes for spring 🌸 #InditexStyle"}
+            <Link to={`/user/${username}`} className="font-medium hover:underline">
+              {username}
+            </Link>{" "}
+            {caption}
           </p>
         </div>
       </div>

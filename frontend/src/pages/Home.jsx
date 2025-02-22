@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react"
-import { Upload } from "lucide-react"
 import Post from "../components/Post"
 
 const generatePost = (id) => ({
@@ -60,12 +59,6 @@ export default function Home() {
       {posts.map((post) => (
         <Post key={post.id} {...post} />
       ))}
-      <button 
-        className="fixed bottom-6 right-6 bg-black text-white p-3 rounded-full hover:bg-black/90 transition-colors"
-        aria-label="Upload new post"
-      >
-        <Upload className="h-4 w-4" />
-      </button>
       <div 
         ref={observerTarget}
         className="h-10 flex items-center justify-center"

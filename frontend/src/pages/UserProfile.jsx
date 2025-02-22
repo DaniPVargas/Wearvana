@@ -1,14 +1,24 @@
-import { Settings, MapPin, Link as LinkIcon } from 'lucide-react';
+import { MapPin, Link as LinkIcon, UserPlus, UserMinus } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 
-export default function Profile() {
-  // This would come from your auth/user context in a real app
+export default function UserProfile() {
+  const { username } = useParams();
+  const [isFollowing, setIsFollowing] = useState(false);
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [username]); // Re-run when username changes
+
+  // This would come from your API in a real app
   const user = {
-    name: "John Doe",
-    username: "@johndoe",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
+    name: username,
+    username: `@${username}`,
+    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
     bio: "Fashion enthusiast | Sustainable clothing advocate",
     location: "Madrid, España",
-    website: "wearvana.com/john",
+    website: "wearvana.com/" + username,
     stats: {
       posts: 42,
       followers: 1234,
@@ -17,12 +27,16 @@ export default function Profile() {
   };
 
   // Mock data for the user's posts/items
-  const items = Array(9).fill(null).map((_, i) => ({
+  const items = Array(18).fill(null).map((_, i) => ({
     id: i,
-    image: `https://picsum.photos/400/400?random=${i}`,
+    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-HbpRL3prpms6Fn7t544TSccClzI2lb.png",
     title: `Item ${i + 1}`,
     price: Math.floor(Math.random() * 100) + 20
   }));
+
+  const toggleFollow = () => {
+    setIsFollowing(!isFollowing);
+  };
 
   return (
     <div className="pb-4">
@@ -40,10 +54,24 @@ export default function Profile() {
           </div>
         </div>
         <button 
-          className="flex items-center gap-2 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          onClick={toggleFollow}
+          className={`wearvana-button flex items-center gap-2 ${
+            isFollowing 
+              ? 'bg-white !text-black border border-gray-300 hover:border-gray-400' 
+              : ''
+          }`}
         >
-          <Settings size={18} />
-          <span>Editar</span>
+          {isFollowing ? (
+            <>
+              <UserMinus size={16} />
+              <span>Siguiendo</span>
+            </>
+          ) : (
+            <>
+              <UserPlus size={16} />
+              <span>Seguir</span>
+            </>
+          )}
         </button>
       </div>
 
@@ -82,7 +110,7 @@ export default function Profile() {
 
       {/* Items Grid */}
       <div>
-        <h2 className="text-lg font-semibold mb-4">Mis Artículos</h2>
+        <h2 className="text-lg font-semibold mb-4">Artículos</h2>
         <div className="grid grid-cols-3 gap-2">
           {items.map((item) => (
             <div key={item.id} className="relative aspect-square">
@@ -101,4 +129,4 @@ export default function Profile() {
       </div>
     </div>
   );
-}
+} 
