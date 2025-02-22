@@ -48,15 +48,16 @@ export default class AuthClient {
   }
 
   async textSearch(query, brand) {
-    const response = await fetch(
-      `${this.apiBaseUrl}/clothing:text_search?query=${query}?brand=${brand}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    // check if brand exists
+    const search = brand
+      ? `${this.apiBaseUrl}/clothing:text_search?query=${query}&brand=${brand}`
+      : `${this.apiBaseUrl}/clothing:text_search?query=${query}`;
+    const response = await fetch(search, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
     if (!response.ok) {
       throw new Error("Non se puideron obter resultados");
