@@ -1,9 +1,11 @@
 from fastapi import FastAPI, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import requests
 import shutil
 import sqlite3
 import uuid
+from pathlib import Path
 from bs4 import BeautifulSoup
 from typing import Any
 from datetime import datetime, timedelta
@@ -59,8 +61,22 @@ class InditexToken:
         self.token = res["id_token"]
         self.expiry_date = datetime.now() + timedelta(seconds=res["expires_in"] - 600)
 
+
+
+origins = [
+    "https://wearvana.netlify.app"
+]
+
 settings = Settings()
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 passwordless_client = PasswordlessClientBuilder(PasswordlessOptions(settings.passwordless_dev_secret)).build()
 inditex_token = InditexToken(settings.inditex_token_url, settings.inditex_client_id, settings.inditex_client_password)
 
@@ -170,8 +186,43 @@ async def search_clothing(query: str, brand: str = "") -> list[Reference]:
 
     return references
         
-
 @app.post("/clothing:image_search")
-async def search_clothing_by_image(file: UploadFile = File(...)) -> list[Reference]:
-    pass
+async def search_clothing_by_image(user_id: str, file: UploadFile = File(...)) -> list[Reference]:
+    token = inditex_token.get_token()
+
+    Path(f"{settings.pictures_dir}/{user_id}").mkdir(parents=True, exist_ok=True)
+    with open(f"{settings.pictures_dir}/{user_id}/uploaded_image.png", "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    image_url = ""
+
+    params = {
+        "image": image_url,
+    }
+
+    headers = {
+        'User-Agent': "PostmanRuntime/7.43.0",
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.get(settings.inditex_image_search_url, params=params, headers=headers)
+
+    references = []
+
+    for r in response.json():
+        ref = {
+            "name": r["name"], 
+            "link": r["link"], 
+            "current_price" : r["price"]["value"]["current"],
+            "original_price" : r["price"]["value"]["original"],
+            "brand": r["brand"],
+            }
+        references.append(ref)
+
+    return references
+
+@app.get("/pictures/{user_id}/{picture_id}")
+async def get_picture(user_id: str, picture_id: str) -> dict[str, str]:
+    return {"message": "Hello World"}
 
