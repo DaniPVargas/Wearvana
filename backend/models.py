@@ -24,3 +24,6 @@ class User(BaseModel):
     username: str
     user_id: str
     profile_picture: str
+
+class AuthBody(BaseModel):
+    token: str

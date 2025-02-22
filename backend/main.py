@@ -21,7 +21,7 @@ from passwordless import (
     VerifiedUser
 )
 
-from models import User, Post, Reference, Tag
+from models import *
 
 class Settings(BaseSettings):
     db_file: str
@@ -83,8 +83,8 @@ passwordless_client = PasswordlessClientBuilder(PasswordlessOptions(settings.pas
 inditex_token = InditexToken(settings.inditex_token_url, settings.inditex_client_id, settings.inditex_client_password)
 
 @app.post("/auth")
-async def authenticate(token: str) -> VerifiedUser:
-    verify_sign_in = VerifySignIn(token)
+async def authenticate(body: AuthBody) -> VerifiedUser:
+    verify_sign_in = VerifySignIn(body.token)
     return passwordless_client.sign_in(verify_sign_in)
 
 @app.post("/users")
@@ -190,52 +190,51 @@ async def search_clothing(query: str, brand: str = "") -> list[Reference]:
 
     return references
         
-# @app.post("/clothing:image_search")
-# async def search_clothing_by_image(user_id: str = Form(...), file: UploadFile = File(...)) -> list[Reference]:
-#     token = inditex_token.get_token()
+@app.post("/clothing:image_search")
+async def search_clothing_by_image(user_id: str = Form(...), file: UploadFile = File(...)) -> list[Reference]:
 
-#     Path(f"{settings.pictures_dir}/{user_id}").mkdir(parents=True, exist_ok=True)
+    Path(f"{settings.pictures_dir}/{user_id}").mkdir(parents=True, exist_ok=True)
 
-#     image_id = str(uuid.uuid4())
-#     image_path = user_folder / f"{image_id}.jpg"
+    image_id = str(uuid.uuid4())
 
-#     # TODO: Convert image to JPG if necessary
+    # TODO: Convert image to JPG if necessary
 
-#     # Save the uploaded file
-#     with image_path.open("wb") as buffer:
-#         shutil.copyfileobj(file.file, buffer)
+    # Save the uploaded file
+    with open(f"{settings.pictures_dir}/{user_id}/{image_id}.jpg", "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
 
-#     # Generate the image URL
-#     image_url = f"http://0.0.0.0:8000/pictures/{user_id}/{image_id}.jpg"
+    token = inditex_token.get_token()
 
-#     return [image_url]
-#     params = {
-#         "image": image_url,
-#     }
+    params = {
+        "image": f"http://0.0.0.0:8000/pictures/{user_id}/{image_id}",
+    }
 
-#     headers = {
-#         'User-Agent': "PostmanRuntime/7.43.0",
-#         "Authorization": f"Bearer {token}",
-#         "Content-Type": "application/json"
-#     }
+    print(params["image"])
 
-#     response = requests.get(settings.inditex_image_search_url, params=params, headers=headers)
+    headers = {
+        'User-Agent': "PostmanRuntime/7.43.0",
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
 
-#     references = []
+    response = requests.get(settings.inditex_image_search_url, params=params, headers=headers)
+    response.raise_for_status()
 
-#     for r in response.json():
-#         ref = {
-#             "name": r["name"], 
-#             "link": r["link"], 
-#             "current_price" : r["price"]["value"]["current"],
-#             "original_price" : r["price"]["value"]["original"],
-#             "brand": r["brand"],
-#             }
-#         references.append(ref)
+    references = []
 
-#     return references
+    for r in response.json():
+        ref = {
+            "name": r["name"], 
+            "link": r["link"], 
+            "current_price" : r["price"]["value"]["current"],
+            "original_price" : r["price"]["value"]["original"],
+            "brand": r["brand"],
+            }
+        references.append(ref)
 
-# @app.get("/pictures/{user_id}/{picture_id}")
-# async def get_picture(user_id: str, picture_id: str) -> dict[str, str]:
-#     return FileResponse(f"pictures/{user_id}/{picture_id}.jpg", media_type="image/png")
+    return references
+
+@app.get("/pictures/{user_id}/{picture_id}")
+async def get_picture(user_id: str, picture_id: str) -> dict[str, str]:
+    return FileResponse(f"pictures/{user_id}/{picture_id}.jpg", media_type="image/jpeg")
 
