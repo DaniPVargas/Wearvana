@@ -282,15 +282,15 @@ async def delete_user(user_id: str) -> dict[str, str]:
 
 
 @app.post("/users/{user_id}/posts")
-async def create_post(upload_post_body: UploadPostBody) -> dict[str, str]:
+async def create_post(user_id: str, upload_post_body: UploadPostBody) -> dict[str, str]:
     conn = get_db()
     cursor = conn.cursor()
 
-    user_id = upload_post_body.user_id
     image_url = upload_post_body.image_url
+    title = upload_post_body.title
     tags = upload_post_body.tags
 
-    cursor.execute("INSERT INTO posts (user_id, image_url) VALUES (?, ?)", (user_id, image_url))
+    cursor.execute("INSERT INTO posts (user_id, title, image_url) VALUES (?, ?, ?)", (user_id, title, image_url))
 
     for t in tags:
         post_id = cursor.lastrowid

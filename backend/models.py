@@ -41,5 +41,6 @@ class FollowUserBody(BaseModel):
     followed_id: str
 
 class UploadPostBody(BaseModel):
-    user_id: str
-    post: Post
+    title: str
+    image: str
+    tags: list[Tag]
