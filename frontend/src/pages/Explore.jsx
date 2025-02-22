@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, Upload, SearchX, X, Camera, Image, RotateCcw, ChevronDown } from 'lucide-react';
+import { Search, Upload, SearchX, X, Camera, Image, RotateCcw, ChevronDown, Send } from 'lucide-react';
 import Skeleton from '../components/Skeleton';
 import TypewriterPlaceholder from '../components/TypewriterPlaceholder';
 
-function ProductCard({ image, name, price, loading }) {
+function ProductCard({ image, name, price, link, brand, loading }) {
   if (loading) {
     return (
       <div className="flex flex-col">
@@ -15,15 +15,23 @@ function ProductCard({ image, name, price, loading }) {
   }
 
   return (
-    <div className="flex flex-col">
-      <img 
-        src={image} 
-        alt={name}
-        className="aspect-[3/4] object-cover rounded-lg mb-2"
-      />
-      <h3 className="text-sm font-medium text-gray-900 line-clamp-1">{name}</h3>
-      <p className="text-sm font-semibold">{price}€</p>
-    </div>
+    <a 
+      href={link}
+      target="_blank"
+      rel="noopener noreferrer" 
+      className="flex flex-col group"
+    >
+      <div className="aspect-[3/4] bg-wearvana-light rounded-lg mb-2 flex items-center justify-center">
+        <span className="text-wearvana-muted">No preview available</span>
+      </div>
+      <h3 className="text-sm font-medium text-wearvana-primary line-clamp-1 group-hover:text-wearvana-accent transition-colors">
+        {name}
+      </h3>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold">{price.value.current}€</p>
+        <span className="text-xs text-wearvana-muted capitalize">{brand}</span>
+      </div>
+    </a>
   );
 }
 
@@ -35,6 +43,62 @@ function EmptyState({ message }) {
     </div>
   );
 }
+
+// Add mock data at the top of the file, after imports
+const MOCK_SEARCH_RESULTS = [
+  {
+    "id": "367022517",
+    "name": "GEOMETRIC JACQUARD SHIRT",
+    "price": {
+      "currency": "EUR",
+      "value": {
+        "current": 29.95
+      }
+    },
+    "link": "https://www.zara.com/es/en/geometric-jacquard-shirt-p01618475.html?v1=367022517",
+    "brand": "zara"
+  },
+  {
+    "id": "364086315",
+    "name": "COTTON - LINEN SHIRT",
+    "price": {
+      "currency": "EUR",
+      "value": {
+        "current": 29.95
+      }
+    },
+    "link": "https://www.zara.com/es/en/cotton---linen-shirt-p01063402.html?v1=364086315",
+    "brand": "zara"
+  }
+];
+
+// Add mock data for image search
+const MOCK_IMAGE_SEARCH_RESULTS = [
+  {
+    "id": "367022517",
+    "name": "GEOMETRIC JACQUARD SHIRT",
+    "price": {
+      "currency": "EUR",
+      "value": {
+        "current": 29.95
+      }
+    },
+    "link": "https://www.zara.com/es/en/geometric-jacquard-shirt-p01618475.html?v1=367022517",
+    "brand": "zara"
+  },
+  {
+    "id": "364086315",
+    "name": "COTTON - LINEN SHIRT",
+    "price": {
+      "currency": "EUR",
+      "value": {
+        "current": 29.95
+      }
+    },
+    "link": "https://www.zara.com/es/en/cotton---linen-shirt-p01063402.html?v1=364086315",
+    "brand": "zara"
+  }
+];
 
 export default function Explore() {
   const [activeTab, setActiveTab] = useState('search');
@@ -55,6 +119,7 @@ export default function Explore() {
   const [streaming, setStreaming] = useState(false);
   const canvasRef = useRef(null);
   const [showPreviewOptions, setShowPreviewOptions] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
   
   // Fixed dimensions for the photo
   const width = 720;
@@ -83,19 +148,44 @@ export default function Explore() {
       price: 29.99,
       image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-HbpRL3prpms6Fn7t544TSccClzI2lb.png"
     },
-    // Add more mock products...
   ];
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
     
     setIsLoading(true);
     setHasSearched(true);
-    // Simulate API call
+
+    // Simulate API delay
     setTimeout(() => {
+      setSearchResults(MOCK_SEARCH_RESULTS);
       setIsLoading(false);
     }, 1000);
+
+    // Comment out the actual API call for now
+    /*
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/clothing:text_search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: searchQuery }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      setSearchResults(data);
+    } catch (error) {
+      console.error('Error searching for clothes:', error);
+    } finally {
+      setIsLoading(false);
+    }
+    */
   };
 
   const handleImageUpload = (e) => {
@@ -104,17 +194,50 @@ export default function Explore() {
     fileInputRef.current?.click();
   };
 
-  const handleFileSelect = (e) => {
+  const searchByImage = async (file) => {
+    setIsLoading(true);
+    setHasSearched(true);
+
+    // Simulate API delay
+    setTimeout(() => {
+      setSearchResults(MOCK_IMAGE_SEARCH_RESULTS);
+      setIsLoading(false);
+    }, 1500);
+
+    // Comment out the actual API call for now
+    /*
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/clothing:image_search`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      setSearchResults(data);
+    } catch (error) {
+      console.error('Error searching by image:', error);
+    } finally {
+      setIsLoading(false);
+    }
+    */
+  };
+
+  const handleFileSelect = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check if file is an image
     if (!file.type.startsWith('image/')) {
       alert('Por favor, selecciona una imagen.');
       return;
     }
 
-    // Check file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       alert('La imagen no puede superar los 5MB.');
       return;
@@ -122,27 +245,15 @@ export default function Explore() {
 
     setSelectedImage(file);
     setPreviewUrl(URL.createObjectURL(file));
-    setIsLoading(true);
     setHasUploaded(true);
-
-    // Simulate upload and processing
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
-
-    // In a real app, you would upload the file here:
-    // const formData = new FormData();
-    // formData.append('image', file);
-    // await fetch('/api/upload', { method: 'POST', body: formData });
+    await searchByImage(file);
   };
 
   const startCamera = async () => {
     try {
-      // First show the camera UI so the element exists
       setShowCamera(true);
       setShowModal(false);
       
-      // Wait a bit for the element to be in the DOM
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -157,20 +268,15 @@ export default function Explore() {
       videoRef.current.srcObject = stream;
       streamRef.current = stream;
       
-      // Instead of playing immediately, wait for canplay event
       videoRef.current.addEventListener('canplay', function handleCanPlay() {
-        // Remove the event listener to avoid multiple calls
         videoRef.current.removeEventListener('canplay', handleCanPlay);
         
-        // Calculate height maintaining aspect ratio
         height = videoRef.current.videoHeight / (videoRef.current.videoWidth / width);
         
-        // Firefox fix
         if (isNaN(height)) {
           height = width / (4 / 3);
         }
 
-        // Set dimensions
         videoRef.current.setAttribute("width", width);
         videoRef.current.setAttribute("height", height);
         if (canvasRef.current) {
@@ -178,7 +284,6 @@ export default function Explore() {
           canvasRef.current.setAttribute("height", height);
         }
 
-        // Start playing and update state
         videoRef.current.play()
           .then(() => {
             setStreaming(true);
@@ -206,20 +311,16 @@ export default function Explore() {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       
-      // Set canvas size to match video dimensions
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
 
-      // Draw the video frame to the canvas
       const context = canvas.getContext("2d");
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // Add flash effect
       setFlash(true);
       setTimeout(() => setFlash(false), 200);
 
-      // Convert to blob
-      canvas.toBlob((blob) => {
+      canvas.toBlob(async (blob) => {
         if (!blob) {
           console.error('Failed to capture photo');
           return;
@@ -230,6 +331,7 @@ export default function Explore() {
         setPreviewUrl(URL.createObjectURL(blob));
         setHasUploaded(true);
         stopCamera();
+        await searchByImage(file);
       }, 'image/jpeg', 0.8);
     } catch (error) {
       console.error('Error capturing photo:', error);
@@ -281,12 +383,12 @@ export default function Explore() {
   return (
     <div className="pb-4">
       {/* Tabs */}
-      <div className="flex border-b border-gray-200 mb-4">
+      <div className="flex border-b border-gray-200 mb-4 relative">
         <button
           className={`flex-1 py-3 text-center font-medium ${
             activeTab === 'search'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-500'
+              ? 'text-wearvana-accent'
+              : 'text-wearvana-muted'
           }`}
           onClick={() => setActiveTab('search')}
         >
@@ -295,13 +397,21 @@ export default function Explore() {
         <button
           className={`flex-1 py-3 text-center font-medium ${
             activeTab === 'inspiration'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-500'
+              ? 'text-wearvana-accent'
+              : 'text-wearvana-muted'
           }`}
           onClick={() => setActiveTab('inspiration')}
         >
           Inspiración
         </button>
+        {/* Animated indicator */}
+        <div
+          className="absolute bottom-0 h-0.5 bg-wearvana-accent transition-all duration-300 ease-in-out"
+          style={{
+            left: activeTab === 'search' ? '0' : '50%',
+            width: '50%'
+          }}
+        />
       </div>
 
       {/* Search Tab Content */}
@@ -314,13 +424,19 @@ export default function Explore() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="wearvana-input pl-10"
+                  className="wearvana-input pl-10 pr-10"
                   placeholder=""
                 />
                 <div className="absolute left-10 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                   {!searchQuery && <TypewriterPlaceholder suggestions={searchSuggestions} />}
                 </div>
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <button
+                  type="submit"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 hover:text-wearvana-accent transition-colors"
+                >
+                  <Send className="h-full w-full" />
+                </button>
               </div>
             </div>
           </form>
@@ -454,7 +570,6 @@ export default function Explore() {
             <div 
               className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center pb-4"
               onClick={(e) => {
-                // Only close if clicking the backdrop
                 if (e.target === e.currentTarget) {
                   setShowModal(false);
                 }
@@ -498,12 +613,13 @@ export default function Explore() {
               ? Array(6).fill(null).map((_, i) => (
                   <ProductCard key={i} loading={true} />
                 ))
-              : products.map((product) => (
+              : searchResults.map((product) => (
                   <ProductCard
                     key={product.id}
-                    image={product.image}
                     name={product.name}
                     price={product.price}
+                    link={product.link}
+                    brand={product.brand}
                     loading={false}
                   />
                 ))}

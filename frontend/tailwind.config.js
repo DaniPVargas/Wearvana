@@ -14,6 +14,13 @@ export default {
           'ig-text': 'var(--ig-text)',
           'ig-link': 'var(--ig-link)',
           'ig-error': 'var(--ig-error)',
+          'wearvana': {
+            primary: '#1A1A1A',
+            accent: '#000000',
+            light: '#F5F5F5',
+            dark: '#0A0A0A',
+            muted: '#666666'
+          }
         },
       },
     },

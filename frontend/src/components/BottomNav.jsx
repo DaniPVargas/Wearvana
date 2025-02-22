@@ -22,8 +22,8 @@ export default function BottomNav() {
                 to={path}
                 className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-colors ${
                   isActive
-                    ? 'text-blue-600'
-                    : 'text-gray-600 hover:text-blue-500'
+                    ? 'text-wearvana-accent'
+                    : 'text-wearvana-muted hover:text-wearvana-accent'
                 }`}
               >
                 <Icon className={`h-6 w-6 ${isActive ? 'stroke-2' : 'stroke-1.5'}`} />
