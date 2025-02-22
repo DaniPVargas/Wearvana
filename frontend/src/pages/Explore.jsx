@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Search, Upload, SearchX, X, Camera, Image } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Search, Upload, SearchX, X, Camera, Image, RotateCcw, ChevronDown } from 'lucide-react';
 import Skeleton from '../components/Skeleton';
 import TypewriterPlaceholder from '../components/TypewriterPlaceholder';
 
@@ -49,6 +49,16 @@ export default function Explore() {
   const fileInputRef = useRef(null);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const [cameraError, setCameraError] = useState(null);
+  const [countdown, setCountdown] = useState(0);
+  const [flash, setFlash] = useState(false);
+  const [streaming, setStreaming] = useState(false);
+  const canvasRef = useRef(null);
+  const [showPreviewOptions, setShowPreviewOptions] = useState(false);
+  
+  // Fixed dimensions for the photo
+  const width = 720;
+  let height = 0;
 
   const searchSuggestions = [
     "Vestido para mi graduación...",
@@ -128,16 +138,102 @@ export default function Explore() {
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
-      });
-      videoRef.current.srcObject = stream;
-      streamRef.current = stream;
+      // First show the camera UI so the element exists
       setShowCamera(true);
       setShowModal(false);
+      
+      // Wait a bit for the element to be in the DOM
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false
+      });
+      
+      if (!videoRef.current) {
+        throw new Error('Video element not found');
+      }
+
+      videoRef.current.srcObject = stream;
+      streamRef.current = stream;
+      
+      // Instead of playing immediately, wait for canplay event
+      videoRef.current.addEventListener('canplay', function handleCanPlay() {
+        // Remove the event listener to avoid multiple calls
+        videoRef.current.removeEventListener('canplay', handleCanPlay);
+        
+        // Calculate height maintaining aspect ratio
+        height = videoRef.current.videoHeight / (videoRef.current.videoWidth / width);
+        
+        // Firefox fix
+        if (isNaN(height)) {
+          height = width / (4 / 3);
+        }
+
+        // Set dimensions
+        videoRef.current.setAttribute("width", width);
+        videoRef.current.setAttribute("height", height);
+        if (canvasRef.current) {
+          canvasRef.current.setAttribute("width", width);
+          canvasRef.current.setAttribute("height", height);
+        }
+
+        // Start playing and update state
+        videoRef.current.play()
+          .then(() => {
+            setStreaming(true);
+            setCameraError(null);
+          })
+          .catch(err => {
+            console.error('Error playing video:', err);
+            setCameraError('Error al iniciar la cámara. Por favor, recarga la página.');
+          });
+      });
     } catch (err) {
-      alert('No se pudo acceder a la cámara.');
       console.error('Error accessing camera:', err);
+      setCameraError('No se pudo acceder a la cámara. Por favor, permite el acceso.');
+      setShowCamera(false);
+    }
+  };
+
+  const capturePhoto = () => {
+    try {
+      if (!videoRef.current || !canvasRef.current) {
+        console.error('Video or canvas element not found');
+        return;
+      }
+
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      
+      // Set canvas size to match video dimensions
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      // Draw the video frame to the canvas
+      const context = canvas.getContext("2d");
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Add flash effect
+      setFlash(true);
+      setTimeout(() => setFlash(false), 200);
+
+      // Convert to blob
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          console.error('Failed to capture photo');
+          return;
+        }
+
+        const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+        setSelectedImage(file);
+        setPreviewUrl(URL.createObjectURL(blob));
+        setHasUploaded(true);
+        stopCamera();
+      }, 'image/jpeg', 0.8);
+    } catch (error) {
+      console.error('Error capturing photo:', error);
+      setCameraError('Error al capturar la foto. Por favor, inténtalo de nuevo.');
     }
   };
 
@@ -146,30 +242,28 @@ export default function Explore() {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setStreaming(false);
     setShowCamera(false);
   };
 
-  const capturePhoto = () => {
-    const video = videoRef.current;
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
-    
-    canvas.toBlob((blob) => {
-      const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
-      setSelectedImage(file);
-      setPreviewUrl(URL.createObjectURL(blob));
-      setIsLoading(true);
-      setHasUploaded(true);
-      stopCamera();
-
-      // Simulate upload and processing
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 1500);
-    }, 'image/jpeg');
+  const startCountdown = () => {
+    setCountdown(3);
   };
+
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown(countdown - 1);
+        if (countdown === 1) {
+          capturePhoto();
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
 
   const handleRemoveImage = () => {
     setSelectedImage(null);
@@ -249,22 +343,59 @@ export default function Explore() {
                 ref={videoRef}
                 autoPlay
                 playsInline
-                className="w-full aspect-square object-cover rounded-lg"
+                muted
+                style={{ 
+                  width: '100%',
+                  height: '100%',
+                  minHeight: '400px',
+                  maxHeight: '80vh',
+                  objectFit: 'cover',
+                  backgroundColor: 'black'
+                }}
+                className="rounded-lg"
               />
-              <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
-                <button
-                  onClick={stopCamera}
-                  className="p-3 bg-white rounded-full text-black shadow-lg hover:bg-gray-100"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-                <button
-                  onClick={capturePhoto}
-                  className="p-3 bg-white rounded-full text-black shadow-lg hover:bg-gray-100"
-                >
-                  <Camera className="h-6 w-6" />
-                </button>
-              </div>
+              {flash && (
+                <div className="absolute inset-0 bg-white animate-flash" />
+              )}
+              {cameraError ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
+                  <div className="text-white text-center px-4">
+                    <p className="mb-4">{cameraError}</p>
+                    <button
+                      onClick={stopCamera}
+                      className="wearvana-button"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-end pb-4">
+                  <div className="w-full px-10 flex items-center">
+                    <button
+                      onClick={stopCamera}
+                      className="p-3 bg-white/90 rounded-full text-black shadow-lg hover:bg-white"
+                      style={{ backdropFilter: 'blur(4px)' }}
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                    <div className="flex-grow flex justify-center">
+                      <button
+                        onClick={capturePhoto}
+                        className="p-2 bg-white/90 rounded-full shadow-lg hover:bg-white transform active:scale-95 transition-transform"
+                        style={{ 
+                          width: '64px', 
+                          height: '64px',
+                          backdropFilter: 'blur(4px)'
+                        }}
+                      >
+                        <div className="w-full h-full rounded-full border-4 border-black/20" />
+                      </button>
+                    </div>
+                    <div className="w-[44px]" />
+                  </div>
+                </div>
+              )}
             </div>
           ) : previewUrl ? (
             <div className="relative mb-4">
@@ -274,11 +405,39 @@ export default function Explore() {
                 className="w-full aspect-square object-cover rounded-lg"
               />
               <button
-                onClick={handleRemoveImage}
-                className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70"
+                onClick={() => setShowPreviewOptions(!showPreviewOptions)}
+                className="absolute top-4 right-4 p-2 bg-black/50 rounded-full text-white hover:bg-black/70"
               >
-                <X className="h-5 w-5" />
+                <ChevronDown className="h-5 w-5" />
               </button>
+              {showPreviewOptions && (
+                <div className="absolute top-16 right-4 bg-white rounded-lg shadow-lg overflow-hidden">
+                  <button
+                    onClick={() => {
+                      setPreviewUrl(null);
+                      setSelectedImage(null);
+                      startCamera();
+                      setShowPreviewOptions(false);
+                    }}
+                    className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    <span>Volver a tomar</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleRemoveImage();
+                      setShowPreviewOptions(false);
+                    }}
+                    className="w-full px-4 py-3 text-left hover:bg-gray-50 border-t border-gray-100"
+                  >
+                    <div className="flex items-center gap-2">
+                      <X className="h-4 w-4" />
+                      <span>Cerrar</span>
+                    </div>
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <button 
@@ -359,6 +518,12 @@ export default function Explore() {
           />
         )}
       </div>
+
+      {/* Hidden canvas for photo capture */}
+      <canvas
+        ref={canvasRef}
+        className="hidden"
+      />
     </div>
   );
 } 
