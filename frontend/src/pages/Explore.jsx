@@ -19,7 +19,7 @@ function ProductCard({ image, name, price, link, brand, loading }) {
       href={link}
       target="_blank"
       rel="noopener noreferrer" 
-      className="flex flex-col group"
+      className="flex flex-col group hover:shadow-lg transition-shadow duration-200 rounded-lg p-2"
     >
       <div className="aspect-[3/4] bg-wearvana-light rounded-lg mb-2 flex items-center justify-center">
         <span className="text-wearvana-muted">No preview available</span>
@@ -190,7 +190,6 @@ export default function Explore() {
 
   const handleImageUpload = (e) => {
     e.preventDefault();
-    setShowModal(false);
     fileInputRef.current?.click();
   };
 
@@ -246,6 +245,7 @@ export default function Explore() {
     setSelectedImage(file);
     setPreviewUrl(URL.createObjectURL(file));
     setHasUploaded(true);
+    setShowModal(false);
     await searchByImage(file);
   };
 
@@ -381,258 +381,268 @@ export default function Explore() {
                            (activeTab === 'inspiration' && hasUploaded);
 
   return (
-    <div className="pb-4">
-      {/* Tabs */}
-      <div className="flex border-b border-gray-200 mb-4 relative">
-        <button
-          className={`flex-1 py-3 text-center font-medium ${
-            activeTab === 'search'
-              ? 'text-wearvana-accent'
-              : 'text-wearvana-muted'
-          }`}
-          onClick={() => setActiveTab('search')}
-        >
-          Buscar
-        </button>
-        <button
-          className={`flex-1 py-3 text-center font-medium ${
-            activeTab === 'inspiration'
-              ? 'text-wearvana-accent'
-              : 'text-wearvana-muted'
-          }`}
-          onClick={() => setActiveTab('inspiration')}
-        >
-          Inspiración
-        </button>
-        {/* Animated indicator */}
-        <div
-          className="absolute bottom-0 h-0.5 bg-wearvana-accent transition-all duration-300 ease-in-out"
-          style={{
-            left: activeTab === 'search' ? '0' : '50%',
-            width: '50%'
-          }}
-        />
-      </div>
+    <div className="pb-4 min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto">
+        {/* Tabs */}
+        <div className="bg-white sticky top-0 z-10">
+          <div className="max-w-2xl mx-auto">
+            <div className="flex border-b border-gray-200 relative">
+              <button
+                className={`flex-1 py-3 text-center font-medium ${
+                  activeTab === 'search'
+                    ? 'text-wearvana-accent'
+                    : 'text-wearvana-muted'
+                }`}
+                onClick={() => setActiveTab('search')}
+              >
+                Buscar
+              </button>
+              <button
+                className={`flex-1 py-3 text-center font-medium ${
+                  activeTab === 'inspiration'
+                    ? 'text-wearvana-accent'
+                    : 'text-wearvana-muted'
+                }`}
+                onClick={() => setActiveTab('inspiration')}
+              >
+                Inspiración
+              </button>
+              {/* Animated indicator */}
+              <div
+                className="absolute bottom-0 h-0.5 bg-wearvana-accent transition-all duration-300 ease-in-out"
+                style={{
+                  left: activeTab === 'search' ? '0' : '50%',
+                  width: '50%'
+                }}
+              />
+            </div>
+          </div>
+        </div>
 
-      {/* Search Tab Content */}
-      {activeTab === 'search' && (
-        <div className="px-4">
-          <form onSubmit={handleSearch} className="mb-6">
-            <div className="relative">
+        {/* Search Tab Content */}
+        {activeTab === 'search' && (
+          <div className="px-4 max-w-2xl mx-auto">
+            <form onSubmit={handleSearch} className="mb-6 pt-4">
               <div className="relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="wearvana-input pl-10 pr-10"
-                  placeholder=""
-                />
-                <div className="absolute left-10 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                  {!searchQuery && <TypewriterPlaceholder suggestions={searchSuggestions} />}
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="wearvana-input pl-10 pr-10"
+                    placeholder=""
+                  />
+                  <div className="absolute left-10 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                    {!searchQuery && <TypewriterPlaceholder suggestions={searchSuggestions} />}
+                  </div>
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <button
+                    type="submit"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 hover:text-wearvana-accent transition-colors"
+                  >
+                    <Send className="h-full w-full" />
+                  </button>
                 </div>
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Inspiration Tab Content */}
+        {activeTab === 'inspiration' && (
+          <div className="px-4 mb-6 max-w-2xl mx-auto pt-4">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              accept="image/*"
+              className="hidden"
+            />
+            {showCamera ? (
+              <div className="relative mb-4">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  style={{ 
+                    width: '100%',
+                    height: '100%',
+                    minHeight: '400px',
+                    maxHeight: '80vh',
+                    objectFit: 'cover',
+                    backgroundColor: 'black'
+                  }}
+                  className="rounded-lg"
+                />
+                {flash && (
+                  <div className="absolute inset-0 bg-white animate-flash" />
+                )}
+                {cameraError ? (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
+                    <div className="text-white text-center px-4">
+                      <p className="mb-4">{cameraError}</p>
+                      <button
+                        onClick={stopCamera}
+                        className="wearvana-button"
+                      >
+                        Cerrar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-end pb-4">
+                    <div className="w-full px-10 flex items-center">
+                      <button
+                        onClick={stopCamera}
+                        className="p-3 bg-white/90 rounded-full text-black shadow-lg hover:bg-white"
+                        style={{ backdropFilter: 'blur(4px)' }}
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                      <div className="flex-grow flex justify-center">
+                        <button
+                          onClick={capturePhoto}
+                          className="p-2 bg-white/90 rounded-full shadow-lg hover:bg-white transform active:scale-95 transition-transform"
+                          style={{ 
+                            width: '64px', 
+                            height: '64px',
+                            backdropFilter: 'blur(4px)'
+                          }}
+                        >
+                          <div className="w-full h-full rounded-full border-4 border-black/20" />
+                        </button>
+                      </div>
+                      <div className="w-[44px]" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : previewUrl ? (
+              <div className="relative mb-4">
+                <img
+                  src={previewUrl}
+                  alt="Preview"
+                  className="w-full aspect-square object-cover rounded-lg"
+                />
                 <button
-                  type="submit"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 hover:text-wearvana-accent transition-colors"
+                  onClick={() => setShowPreviewOptions(!showPreviewOptions)}
+                  className="absolute top-4 right-4 p-2 bg-black/50 rounded-full text-white hover:bg-black/70"
                 >
-                  <Send className="h-full w-full" />
+                  <ChevronDown className="h-5 w-5" />
+                </button>
+                {showPreviewOptions && (
+                  <div className="absolute top-16 right-4 bg-white rounded-lg shadow-lg overflow-hidden">
+                    <button
+                      onClick={() => {
+                        setPreviewUrl(null);
+                        setSelectedImage(null);
+                        startCamera();
+                        setShowPreviewOptions(false);
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      <span>Volver a tomar</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleRemoveImage();
+                        setShowPreviewOptions(false);
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-gray-50 border-t border-gray-100"
+                    >
+                      <div className="flex items-center gap-2">
+                        <X className="h-4 w-4" />
+                        <span>Cerrar</span>
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button 
+                onClick={() => setShowModal(true)}
+                className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
+              >
+                <Upload className="h-5 w-5" />
+                <span>Subir foto</span>
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Upload Options Modal */}
+        {showModal && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center pb-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowModal(false);
+              }
+            }}
+          >
+            <div className="bg-white w-full max-w-sm rounded-t-xl p-4">
+              <div className="flex flex-col gap-4">
+                <h3 className="text-lg font-semibold text-center mb-2">Subir foto</h3>
+                <button 
+                  onClick={startCamera}
+                  className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
+                >
+                  <Camera className="h-5 w-5" />
+                  <span>Hacer foto</span>
+                </button>
+                <button 
+                  onClick={handleImageUpload}
+                  className="wearvana-button w-full flex items-center justify-center gap-2 py-3 !bg-white !text-black border border-gray-200"
+                >
+                  <Image className="h-5 w-5" />
+                  <span>Subir de galería</span>
+                </button>
+                <button 
+                  onClick={() => setShowModal(false)}
+                  className="text-gray-500 py-2 font-medium"
+                >
+                  Cancelar
                 </button>
               </div>
             </div>
-          </form>
-        </div>
-      )}
-
-      {/* Inspiration Tab Content */}
-      {activeTab === 'inspiration' && (
-        <div className="px-4 mb-6">
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileSelect}
-            accept="image/*"
-            className="hidden"
-          />
-          {showCamera ? (
-            <div className="relative mb-4">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                style={{ 
-                  width: '100%',
-                  height: '100%',
-                  minHeight: '400px',
-                  maxHeight: '80vh',
-                  objectFit: 'cover',
-                  backgroundColor: 'black'
-                }}
-                className="rounded-lg"
-              />
-              {flash && (
-                <div className="absolute inset-0 bg-white animate-flash" />
-              )}
-              {cameraError ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
-                  <div className="text-white text-center px-4">
-                    <p className="mb-4">{cameraError}</p>
-                    <button
-                      onClick={stopCamera}
-                      className="wearvana-button"
-                    >
-                      Cerrar
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-end pb-4">
-                  <div className="w-full px-10 flex items-center">
-                    <button
-                      onClick={stopCamera}
-                      className="p-3 bg-white/90 rounded-full text-black shadow-lg hover:bg-white"
-                      style={{ backdropFilter: 'blur(4px)' }}
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                    <div className="flex-grow flex justify-center">
-                      <button
-                        onClick={capturePhoto}
-                        className="p-2 bg-white/90 rounded-full shadow-lg hover:bg-white transform active:scale-95 transition-transform"
-                        style={{ 
-                          width: '64px', 
-                          height: '64px',
-                          backdropFilter: 'blur(4px)'
-                        }}
-                      >
-                        <div className="w-full h-full rounded-full border-4 border-black/20" />
-                      </button>
-                    </div>
-                    <div className="w-[44px]" />
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : previewUrl ? (
-            <div className="relative mb-4">
-              <img
-                src={previewUrl}
-                alt="Preview"
-                className="w-full aspect-square object-cover rounded-lg"
-              />
-              <button
-                onClick={() => setShowPreviewOptions(!showPreviewOptions)}
-                className="absolute top-4 right-4 p-2 bg-black/50 rounded-full text-white hover:bg-black/70"
-              >
-                <ChevronDown className="h-5 w-5" />
-              </button>
-              {showPreviewOptions && (
-                <div className="absolute top-16 right-4 bg-white rounded-lg shadow-lg overflow-hidden">
-                  <button
-                    onClick={() => {
-                      setPreviewUrl(null);
-                      setSelectedImage(null);
-                      startCamera();
-                      setShowPreviewOptions(false);
-                    }}
-                    className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-2"
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                    <span>Volver a tomar</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleRemoveImage();
-                      setShowPreviewOptions(false);
-                    }}
-                    className="w-full px-4 py-3 text-left hover:bg-gray-50 border-t border-gray-100"
-                  >
-                    <div className="flex items-center gap-2">
-                      <X className="h-4 w-4" />
-                      <span>Cerrar</span>
-                    </div>
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <button 
-              onClick={() => setShowModal(true)}
-              className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
-            >
-              <Upload className="h-5 w-5" />
-              <span>Subir foto</span>
-            </button>
-          )}
-
-          {/* Upload Options Modal */}
-          {showModal && (
-            <div 
-              className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center pb-4"
-              onClick={(e) => {
-                if (e.target === e.currentTarget) {
-                  setShowModal(false);
-                }
-              }}
-            >
-              <div className="bg-white w-full max-w-sm rounded-t-xl p-4">
-                <div className="flex flex-col gap-4">
-                  <h3 className="text-lg font-semibold text-center mb-2">Subir foto</h3>
-                  <button 
-                    onClick={startCamera}
-                    className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
-                  >
-                    <Camera className="h-5 w-5" />
-                    <span>Hacer foto</span>
-                  </button>
-                  <button 
-                    onClick={handleImageUpload}
-                    className="wearvana-button w-full flex items-center justify-center gap-2 py-3 !bg-white !text-black border border-gray-200"
-                  >
-                    <Image className="h-5 w-5" />
-                    <span>Subir de galería</span>
-                  </button>
-                  <button 
-                    onClick={() => setShowModal(false)}
-                    className="text-gray-500 py-2 font-medium"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Products Grid or Empty State */}
-      <div className="px-4">
-        {shouldShowProducts ? (
-          <div className="grid grid-cols-2 gap-4">
-            {isLoading
-              ? Array(6).fill(null).map((_, i) => (
-                  <ProductCard key={i} loading={true} />
-                ))
-              : searchResults.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    name={product.name}
-                    price={product.price}
-                    link={product.link}
-                    brand={product.brand}
-                    loading={false}
-                  />
-                ))}
           </div>
-        ) : (
-          <EmptyState 
-            message={
-              activeTab === 'search' 
-                ? "Busca prendas para ver resultados"
-                : "Sube una foto para encontrar prendas similares"
-            }
-          />
         )}
+
+        {/* Products Grid or Empty State */}
+        <div className="px-4">
+          <div className="max-w-7xl mx-auto">
+            {shouldShowProducts ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                {isLoading
+                  ? Array(6).fill(null).map((_, i) => (
+                      <ProductCard key={i} loading={true} />
+                    ))
+                  : searchResults.map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        name={product.name}
+                        price={product.price}
+                        link={product.link}
+                        brand={product.brand}
+                        loading={false}
+                      />
+                    ))}
+              </div>
+            ) : (
+              <div className="max-w-2xl mx-auto">
+                <EmptyState 
+                  message={
+                    activeTab === 'search' 
+                      ? "Busca prendas para ver resultados"
+                      : "Sube una foto para encontrar prendas similares"
+                  }
+                />
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Hidden canvas for photo capture */}

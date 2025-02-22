@@ -16,11 +16,13 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen bg-white">
-      <Header />
-      <div className="max-w-[1200px] mx-auto pt-[70px] pb-20 px-0 lg:px-6">
-        <main className="flex-grow">{children}</main>
-      </div>
+      <Header className="md:hidden" />
       <BottomNav />
+      <div className="md:pl-[244px]">
+        <div className="max-w-[1200px] mx-auto pt-[70px] md:pt-8 pb-20 md:pb-8 px-0 lg:px-6">
+          <main className="flex-grow">{children}</main>
+        </div>
+      </div>
     </div>
   )
 }
