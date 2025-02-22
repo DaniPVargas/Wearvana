@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Search, Upload, SearchX, X } from 'lucide-react';
+import { Search, Upload, SearchX, X, Camera, Image } from 'lucide-react';
 import Skeleton from '../components/Skeleton';
 import TypewriterPlaceholder from '../components/TypewriterPlaceholder';
 
@@ -44,7 +44,11 @@ export default function Explore() {
   const [hasUploaded, setHasUploaded] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const fileInputRef = useRef(null);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
 
   const searchSuggestions = [
     "Vestido para mi graduación...",
@@ -86,6 +90,7 @@ export default function Explore() {
 
   const handleImageUpload = (e) => {
     e.preventDefault();
+    setShowModal(false);
     fileInputRef.current?.click();
   };
 
@@ -121,10 +126,56 @@ export default function Explore() {
     // await fetch('/api/upload', { method: 'POST', body: formData });
   };
 
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      });
+      videoRef.current.srcObject = stream;
+      streamRef.current = stream;
+      setShowCamera(true);
+      setShowModal(false);
+    } catch (err) {
+      alert('No se pudo acceder a la cámara.');
+      console.error('Error accessing camera:', err);
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setShowCamera(false);
+  };
+
+  const capturePhoto = () => {
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    
+    canvas.toBlob((blob) => {
+      const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+      setSelectedImage(file);
+      setPreviewUrl(URL.createObjectURL(blob));
+      setIsLoading(true);
+      setHasUploaded(true);
+      stopCamera();
+
+      // Simulate upload and processing
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1500);
+    }, 'image/jpeg');
+  };
+
   const handleRemoveImage = () => {
     setSelectedImage(null);
     setPreviewUrl(null);
     setHasUploaded(false);
+    stopCamera();
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -192,7 +243,30 @@ export default function Explore() {
             accept="image/*"
             className="hidden"
           />
-          {previewUrl ? (
+          {showCamera ? (
+            <div className="relative mb-4">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                className="w-full aspect-square object-cover rounded-lg"
+              />
+              <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
+                <button
+                  onClick={stopCamera}
+                  className="p-3 bg-white rounded-full text-black shadow-lg hover:bg-gray-100"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={capturePhoto}
+                  className="p-3 bg-white rounded-full text-black shadow-lg hover:bg-gray-100"
+                >
+                  <Camera className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+          ) : previewUrl ? (
             <div className="relative mb-4">
               <img
                 src={previewUrl}
@@ -208,12 +282,51 @@ export default function Explore() {
             </div>
           ) : (
             <button 
-              onClick={handleImageUpload}
+              onClick={() => setShowModal(true)}
               className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
             >
               <Upload className="h-5 w-5" />
               <span>Subir foto</span>
             </button>
+          )}
+
+          {/* Upload Options Modal */}
+          {showModal && (
+            <div 
+              className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center pb-4"
+              onClick={(e) => {
+                // Only close if clicking the backdrop
+                if (e.target === e.currentTarget) {
+                  setShowModal(false);
+                }
+              }}
+            >
+              <div className="bg-white w-full max-w-sm rounded-t-xl p-4">
+                <div className="flex flex-col gap-4">
+                  <h3 className="text-lg font-semibold text-center mb-2">Subir foto</h3>
+                  <button 
+                    onClick={startCamera}
+                    className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
+                  >
+                    <Camera className="h-5 w-5" />
+                    <span>Hacer foto</span>
+                  </button>
+                  <button 
+                    onClick={handleImageUpload}
+                    className="wearvana-button w-full flex items-center justify-center gap-2 py-3 !bg-white !text-black border border-gray-200"
+                  >
+                    <Image className="h-5 w-5" />
+                    <span>Subir de galería</span>
+                  </button>
+                  <button 
+                    onClick={() => setShowModal(false)}
+                    className="text-gray-500 py-2 font-medium"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       )}
