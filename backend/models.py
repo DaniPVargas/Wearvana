@@ -15,14 +15,17 @@ class Tag(Reference):
 
 
 class Post(BaseModel):
+    id: str
+    user_id: str
     title: str
     image: str
     tags: list[Tag]
 
 
 class User(BaseModel):
-    username: str
-    user_id: str
+    id: str
+    user_alias: str
+    description: str
     profile_picture: str
 
 class AuthBody(BaseModel):

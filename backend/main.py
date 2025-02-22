@@ -66,8 +66,8 @@ def init_db(settings):
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY,
-            name TEXT UNIQUE NOT NULL,
+            user_id TEXT PRIMARY KEY,
+            user_alias TEXT NOT NULL,
             description TEXT,
             profile_picture_url TEXT
         )
@@ -75,26 +75,27 @@ def init_db(settings):
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS posts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            post_id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
+            title TEXT,
             image_url TEXT NOT NULL,
-            FOREIGN KEY (user_id) REFERENCES users(id)
+            FOREIGN KEY (user_id) REFERENCES users(user_id)
         )
     ''')
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS relationships (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            follower_id INTEGER NOT NULL,
-            followed_id INTEGER NOT NULL,
-            FOREIGN KEY (follower_id) REFERENCES users(id),
-            FOREIGN KEY (followed_id) REFERENCES users(id)
+            relation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            follower_id TEXT NOT NULL,
+            followed_id TEXT NOT NULL,
+            FOREIGN KEY (follower_id) REFERENCES users(follower_id),
+            FOREIGN KEY (followed_id) REFERENCES users(followed_id)
         )
     ''')
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS tags (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tag_id INTEGER PRIMARY KEY AUTOINCREMENT,
             post_id INTEGER NOT NULL,
             x_coord FLOAT NOT NULL,
             y_coord FLOAT NOT NULL,
@@ -103,7 +104,7 @@ def init_db(settings):
             original_price FLOAT,
             brand TEXT NOT NULL,
             link TEXT NOT NULL,
-            FOREIGN KEY (post_id) REFERENCES posts(id)
+            FOREIGN KEY (post_id) REFERENCES posts(post_if)
         )
     ''')
 
@@ -142,19 +143,19 @@ def authenticate(body: AuthBody) -> VerifiedUser:
 
 
 @app.post("/users")
-def create_user(create_user_body: CreateUserBody) -> Any:
+def create_user(create_user_body: CreateUserBody) -> str:
     conn = get_db()
     cursor = conn.cursor()
 
     user_id = str(uuid.uuid4())
 
-    user_alias = create_user_body.alias
+    user_alias = create_user_body.user_alias
     description = create_user_body.description
     profile_picture_url = create_user_body.profile_picture_url
 
     try:
         cursor.execute(
-            "INSERT INTO users (id, name, description, profile_picture_url) VALUES (?, ?, ?, ?)",
+            "INSERT INTO users (user_id, user_alias, description, profile_picture_url) VALUES (?, ?, ?, ?)",
             (user_id, user_alias, description, profile_picture_url),
         )
         conn.commit()
@@ -180,18 +181,23 @@ def get_users() -> list[User]:
     users = cursor.fetchall()
     conn.close()
 
-    return [dict(user) for user in users]
+    return [{"user_id": user[0], "user_alias": user[1], "description": user[2], "profile_picture": user[3]} for user in users]
 
 
 @app.get("/users/{user_id}")
 async def get_user_info(user_id: str) -> User:
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+    cursor.execute("SELECT user_id, user_alias, description, profile_picture FROM users WHERE id = ?", (user_id,))
     user = cursor.fetchone()
+
+    result = {"user_id": user[0], "user_alias": user[1], "description": user[2], "profile_picture": user[3]}
     conn.close()
 
-    return user
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    else:
+        return result
 
 
 @app.get("/users/{user_id}/posts")
@@ -204,9 +210,9 @@ async def get_user_posts(user_id: str) -> list[Post]:
     posts_results = []
     
     for row in posts:
-        posts_results.append({"id": row["id"], "user_id": row["user_id"], "image_url": row["image_url"], "tags": []})
+        posts_results.append({"post_id": row["id"], "user_id": row["user_id"], "title": row["title"], "image_url": row["image_url"], "tags": []})
 
-        cursor.execute("SELECT * FROM tags WHERE post_id = ?", (row["id"],))
+        cursor.execute("SELECT * FROM tags WHERE post_id = ?", (row["post_id"],))
         tags = cursor.fetchall()
 
         for t in tags:
@@ -223,7 +229,7 @@ async def get_user_posts(user_id: str) -> list[Post]:
         
     conn.close()
 
-    return [dict(post) for post in posts]
+    return [post for post in posts]
 
 
 @app.get("/users/{user_id}/followed")
@@ -298,7 +304,7 @@ async def create_post(upload_post_body: UploadPostBody) -> dict[str, str]:
 
     conn.commit()
 
-    return {"message": "User followed successfully"}
+    return {"message": "Post uploaded successfully"}
 
 
 @app.delete("/users/{user_id}/posts/{post_id}")
@@ -321,9 +327,12 @@ async def get_user_feed(user_id: str) -> list[Post]:
     posts_results = []
     
     for row in posts:
-        posts_results.append({"id": row["id"], "user_id": row["user_id"], "image_url": row["image_url"], "tags": []})
+        posts_results.append({
+            "post_id": row["post_id"],
+            "user_id": row["user_id"], 
+            "title": row["title"],"image_url": row["image_url"], "tags": []})
 
-        cursor.execute("SELECT * FROM tags WHERE post_id = ?", (row["id"],))
+        cursor.execute("SELECT * FROM tags WHERE post_id = ?", (row["post_id"],))
         tags = cursor.fetchall()
 
         for t in tags:
@@ -340,7 +349,7 @@ async def get_user_feed(user_id: str) -> list[Post]:
         
     conn.close()
 
-    return [dict(post) for post in posts]
+    return [post for post in posts]
 
 ## API Inditex
 
