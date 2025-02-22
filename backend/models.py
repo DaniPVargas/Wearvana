@@ -10,15 +10,15 @@ class Reference(BaseModel):
 
 
 class Tag(Reference):
-    x_coord: int
-    y_coord: int
+    x_coord: float
+    y_coord: float
 
 
 class Post(BaseModel):
-    post_id: Optional[str] = None
+    post_id: Optional[int] = None
     user_id: Optional[str] = None
     title: str
-    image: str
+    image_url: str
     tags: list[Tag]
 
 
@@ -37,10 +37,9 @@ class CreateUserBody(BaseModel):
     profile_picture_url: Optional[str] = None
 
 class FollowUserBody(BaseModel):
-    follower_id: str
     followed_id: str
 
 class UploadPostBody(BaseModel):
     title: str
-    image: str
+    image_url: str
     tags: list[Tag]

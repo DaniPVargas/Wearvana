@@ -211,7 +211,7 @@ async def get_user_posts(user_id: str) -> list[Post]:
     posts_results = []
     
     for row in posts:
-        posts_results.append({"post_id": row["id"], "user_id": row["user_id"], "title": row["title"], "image_url": row["image_url"], "tags": []})
+        posts_results.append({"post_id": row["post_id"], "user_id": row["user_id"], "title": row["title"], "image_url": row["image_url"], "tags": []})
 
         cursor.execute("SELECT * FROM tags WHERE post_id = ?", (row["post_id"],))
         tags = cursor.fetchall()
@@ -232,7 +232,7 @@ async def get_user_posts(user_id: str) -> list[Post]:
         
     conn.close()
 
-    return [post for post in posts]
+    return [post for post in posts_results]
 
 
 @app.get("/users/{user_id}/followed")
@@ -258,9 +258,8 @@ async def get_followers(user_id: str) -> list[str]:
 
 
 @app.post("/users/{user_id}/followed")
-async def follow_user(follow_user_body: FollowUserBody) -> dict[str, str]:
+async def follow_user(user_id: str, follow_user_body: FollowUserBody) -> dict[str, str]:
 
-    user_id = follow_user_body.follower_id
     followed_id = follow_user_body.followed_id
 
     conn = get_db()
@@ -352,7 +351,7 @@ async def get_user_feed(user_id: str) -> list[Post]:
         
     conn.close()
 
-    return [post for post in posts]
+    return [post for post in posts_results]
 
 ## API Inditex
 
