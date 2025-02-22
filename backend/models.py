@@ -15,8 +15,8 @@ class Tag(Reference):
 
 
 class Post(BaseModel):
-    post_id: str
-    user_id: str
+    post_id: Optional[str] = None
+    user_id: Optional[str] = None
     title: str
     image: str
     tags: list[Tag]
