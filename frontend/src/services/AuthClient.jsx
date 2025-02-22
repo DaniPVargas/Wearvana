@@ -46,36 +46,4 @@ export default class AuthClient {
       throw error;
     }
   }
-
-  async analyzeImage(file) {
-    // Aquí iría la lógica para hacer la llamada a la API en el futuro
-    // Por ahora, devolvemos un mock de datos
-
-    // Simulamos un retraso para imitar una llamada a la API
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Mock de datos
-    const mockResponse = {
-      status: "success",
-      data: [
-        {
-          type: "shirt",
-          color: "blue",
-          brand: "Brand A",
-        },
-        {
-          type: "pants",
-          color: "black",
-          brand: "Brand B",
-        },
-        {
-          type: "shoes",
-          color: "white",
-          brand: "Brand C",
-        },
-      ],
-    };
-
-    return mockResponse;
-  }
 }
