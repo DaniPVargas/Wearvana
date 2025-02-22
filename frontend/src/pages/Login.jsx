@@ -41,7 +41,7 @@ export default function LoginPage() {
   return (
     <div className="max-w-md px-5 mx-auto flex items-center justify-center min-h-screen bg-ig-primary">
       <section className="w-full p-6 bg-white rounded-lg shadow-lg">
-        <img src="/wearvana.svg" alt="Logo" className="mx-auto mb-16 w-24 h-24 " />
+        <img src="/logo.svg" alt="Logo" className="mx-auto mb-16 w-24 h-24 " />
         <button
           onClick={handleSubmit}
           className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
