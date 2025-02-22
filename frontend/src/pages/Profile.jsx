@@ -1,6 +1,18 @@
 import { Settings, MapPin, Link as LinkIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import Skeleton from '../components/Skeleton';
 
 export default function Profile() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulate loading on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
   // This would come from your auth/user context in a real app
   const user = {
     name: "John Doe",
@@ -19,10 +31,57 @@ export default function Profile() {
   // Mock data for the user's posts/items
   const items = Array(9).fill(null).map((_, i) => ({
     id: i,
-    image: `https://picsum.photos/400/400?random=${i}`,
+    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-HbpRL3prpms6Fn7t544TSccClzI2lb.png",
     title: `Item ${i + 1}`,
     price: Math.floor(Math.random() * 100) + 20
   }));
+
+  if (isLoading) {
+    return (
+      <div className="pb-4">
+        {/* Profile Header Skeleton */}
+        <div className="flex justify-between items-start mb-6">
+          <div className="flex items-center gap-4">
+            <Skeleton className="w-20 h-20 rounded-full" />
+            <div>
+              <Skeleton className="w-32 h-6 mb-2 rounded" />
+              <Skeleton className="w-24 h-4 rounded" />
+            </div>
+          </div>
+          <Skeleton className="w-28 h-10 rounded-lg" />
+        </div>
+
+        {/* Bio Section Skeleton */}
+        <div className="mb-6">
+          <Skeleton className="w-3/4 h-4 mb-2 rounded" />
+          <div className="flex flex-col gap-2">
+            <Skeleton className="w-1/2 h-4 rounded" />
+            <Skeleton className="w-1/3 h-4 rounded" />
+          </div>
+        </div>
+
+        {/* Stats Skeleton */}
+        <div className="flex justify-around mb-8 py-4 border-y border-gray-200">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="text-center">
+              <Skeleton className="w-12 h-6 mb-1 mx-auto rounded" />
+              <Skeleton className="w-20 h-4 mx-auto rounded" />
+            </div>
+          ))}
+        </div>
+
+        {/* Items Grid Skeleton */}
+        <div>
+          <Skeleton className="w-40 h-8 mb-4 rounded" />
+          <div className="grid grid-cols-3 gap-2">
+            {[...Array(9)].map((_, i) => (
+              <Skeleton key={i} className="aspect-square rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pb-4">
@@ -40,9 +99,9 @@ export default function Profile() {
           </div>
         </div>
         <button 
-          className="flex items-center gap-2 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          className="wearvana-button flex items-center gap-2"
         >
-          <Settings size={18} />
+          <Settings size={16} />
           <span>Editar</span>
         </button>
       </div>

@@ -1,15 +1,22 @@
 import { MapPin, Link as LinkIcon, UserPlus, UserMinus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import Skeleton from '../components/Skeleton';
 
 export default function UserProfile() {
   const { username } = useParams();
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Scroll to top when component mounts
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [username]); // Re-run when username changes
+    // Simulate loading delay
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [username]);
 
   // This would come from your API in a real app
   const user = {
@@ -37,6 +44,53 @@ export default function UserProfile() {
   const toggleFollow = () => {
     setIsFollowing(!isFollowing);
   };
+
+  if (isLoading) {
+    return (
+      <div className="pb-4">
+        {/* Profile Header Skeleton */}
+        <div className="flex justify-between items-start mb-6">
+          <div className="flex items-center gap-4">
+            <Skeleton className="w-20 h-20 rounded-full" />
+            <div>
+              <Skeleton className="w-32 h-6 mb-2 rounded" />
+              <Skeleton className="w-24 h-4 rounded" />
+            </div>
+          </div>
+          <Skeleton className="w-28 h-10 rounded-full" />
+        </div>
+
+        {/* Bio Section Skeleton */}
+        <div className="mb-6">
+          <Skeleton className="w-3/4 h-4 mb-2 rounded" />
+          <div className="flex flex-col gap-2">
+            <Skeleton className="w-1/2 h-4 rounded" />
+            <Skeleton className="w-1/3 h-4 rounded" />
+          </div>
+        </div>
+
+        {/* Stats Skeleton */}
+        <div className="flex justify-around mb-8 py-4 border-y border-gray-200">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="text-center">
+              <Skeleton className="w-12 h-6 mb-1 mx-auto rounded" />
+              <Skeleton className="w-20 h-4 mx-auto rounded" />
+            </div>
+          ))}
+        </div>
+
+        {/* Items Grid Skeleton */}
+        <div>
+          <Skeleton className="w-40 h-8 mb-4 rounded" />
+          <div className="grid grid-cols-3 gap-2">
+            {[...Array(18)].map((_, i) => (
+              <Skeleton key={i} className="aspect-square rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pb-4">
