@@ -1,0 +1,9 @@
+@use "colors";
+
+@use "bootstrap/scss/bootstrap.scss";
+
+@use "sass:map";
+
+.main-container {
+  max-width: map.get(bootstrap.$grid-breakpoints, "md");
+}
