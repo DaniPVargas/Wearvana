@@ -220,7 +220,6 @@ async def get_user_info(user_id: str) -> User:
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     else:
-        print(dict(user))
         result = {
             "user_id": user[0],
             "complete_name": user[1],
