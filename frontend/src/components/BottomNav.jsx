@@ -23,6 +23,7 @@ export default function BottomNav() {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const canvasRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Add scroll lock effect
   useEffect(() => {
@@ -70,6 +71,7 @@ export default function BottomNav() {
 
     setNewProfileImage(file);
     setNewProfileImagePreview(URL.createObjectURL(file));
+    setShowPhotoUploadModal(false);
   };
 
   const handleSaveProfile = async () => {
@@ -82,12 +84,20 @@ export default function BottomNav() {
         profilePictureUrl = await authClientInstance.uploadImage(newProfileImage, userID);
       }
 
-      // Update user profile
-      await authClientInstance.updateUser(userID, newDescription, profilePictureUrl);
+      // Update user profile with all required fields
+      await authClientInstance.updateUser(
+        userID,
+        user.complete_name, // Keep existing complete_name
+        newDescription,
+        profilePictureUrl
+      );
 
       // Refresh user data
       const userData = await authClientInstance.getUser(userID);
       setUser(userData);
+
+      // Dispatch event to notify profile update
+      window.dispatchEvent(new CustomEvent('profileUpdated'));
 
       // Close modals and reset states
       setShowEditProfileModal(false);
@@ -188,7 +198,7 @@ export default function BottomNav() {
 
   const handleImageUpload = (e) => {
     e.preventDefault();
-    fileInputRef.current?.click();
+    profileImageInputRef.current?.click();
   };
 
   const navItems = [

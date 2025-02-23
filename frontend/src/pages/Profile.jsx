@@ -56,6 +56,17 @@ export default function Profile() {
     if (userID) {
       fetchUserData();
     }
+
+    // Listen for profile updates
+    const handleProfileUpdate = () => {
+      fetchUserData();
+    };
+
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
   }, [userID]);
 
   // Update description state when user data is loaded
@@ -93,8 +104,13 @@ export default function Profile() {
         profilePictureUrl = await authClientInstance.uploadImage(newProfileImage, userID);
       }
 
-      // Update user profile
-      await authClientInstance.updateUser(userID, newDescription, profilePictureUrl);
+      // Update user profile with all required fields
+      await authClientInstance.updateUser(
+        userID,
+        user.complete_name, // Keep existing complete_name
+        newDescription,
+        profilePictureUrl
+      );
 
       // Refresh user data
       const userData = await authClientInstance.getUser(userID);
