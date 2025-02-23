@@ -1,13 +1,11 @@
 import { createContext, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import AuthClient from "../services/AuthClient";
 
 const AuthContext = createContext({});
 
-export const AuthProvider = ({ children }) => {
+export const AuthProvider = ({ children, navigate }) => {
   const [auth, setAuth] = useState(() => localStorage.getItem('jwt') || "");
   const [userID, setUserID] = useState(() => localStorage.getItem('userID') || "");
-  const navigate = useNavigate();
 
   useEffect(() => {
     const validateUser = async () => {
