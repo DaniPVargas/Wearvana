@@ -14,6 +14,7 @@ export default function UploadModal({ isOpen, onClose }) {
   const [tagPosition, setTagPosition] = useState({ x: 0, y: 0 });
   const [currentTag, setCurrentTag] = useState(null);
   const [suggestions, setSuggestions] = useState(null);
+  const [publicationStatus, setPublicationStatus] = useState(null); // null, "publishing", "success", "error"
   const [title, setTitle] = useState("");
 
   const { userID } = useContext(authContext);
@@ -233,13 +234,20 @@ export default function UploadModal({ isOpen, onClose }) {
   };
 
   const publishPost = async ({ image, title, tags }) => {
+    setPublicationStatus("publishing");
     const authClientInstance = new AuthClient();
-    const response = await authClientInstance.publicatePost(
-      userID,
-      image,
-      title,
-      tags
-    );
+    try {
+      await authClientInstance.publicatePost(userID, image, title, tags);
+      console.log("success");
+      setPublicationStatus("success");
+    } catch (error) {
+      setPublicationStatus("error");
+      console.log("error");
+    } finally {
+      setTimeout(() => {
+        setPublicationStatus(null);
+      }, 3000);
+    }
   };
 
   const handleDragStart = (index) => (e) => {
