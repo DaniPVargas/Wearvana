@@ -35,7 +35,6 @@ class Settings(BaseSettings):
     inditex_token_url: str
     inditex_client_id: str
     inditex_client_password: str
-    inditex_scope: str
     passwordless_dev_secret: str
 
     model_config = SettingsConfigDict(env_file=".env")
