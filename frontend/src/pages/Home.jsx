@@ -1,11 +1,25 @@
-import { useState, useEffect, useRef, useContext } from "react"
-import { Upload, Camera, Image, X, Plus, Link as LinkIcon, Settings, Heart, Share2, Copy, Mail, MessageCircle, Check } from "lucide-react"
-import { useNavigate } from "react-router-dom"
-import Post from "../components/Post"
-import UploadModal from "../components/UploadModal"
-import AuthClient from "../services/AuthClient"
-import AuthContext from "../context/AuthProvider"
-import Skeleton from "../components/Skeleton"
+import { useState, useEffect, useRef, useContext } from "react";
+import {
+  Upload,
+  Camera,
+  Image,
+  X,
+  Plus,
+  Link as LinkIcon,
+  Settings,
+  Heart,
+  Share2,
+  Copy,
+  Mail,
+  MessageCircle,
+  Check,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import Post from "../components/Post";
+import UploadModal from "../components/UploadModal";
+import AuthClient from "../services/AuthClient";
+import AuthContext from "../context/AuthProvider";
+import Skeleton from "../components/Skeleton";
 
 const generatePost = (id) => ({
   id,
@@ -14,16 +28,16 @@ const generatePost = (id) => ({
   images: [`https://picsum.photos/600/600?random=${id}`],
   likes: Math.floor(Math.random() * 1000) + 1,
   caption: `Post caption ${id} 📸✨`,
-})
+});
 
 const posts = [
   {
     id: 1,
     username: "minimal_style",
     likes: 2345,
-    caption: "Minimal vibes for spring 🌸 #InditexStyle"
-  }
-]
+    caption: "Minimal vibes for spring 🌸 #InditexStyle",
+  },
+];
 
 const LikeConfetti = ({ active }) => {
   if (!active) return null;
@@ -41,100 +55,165 @@ const LikeConfetti = ({ active }) => {
         />
       ))}
       <style jsx>{`
-        @keyframes confetti-0 { to { transform: rotate(0deg) translateY(-10px) scale(0); opacity: 0; }}
-        @keyframes confetti-1 { to { transform: rotate(30deg) translateY(-12px) scale(0); opacity: 0; }}
-        @keyframes confetti-2 { to { transform: rotate(60deg) translateY(-14px) scale(0); opacity: 0; }}
-        @keyframes confetti-3 { to { transform: rotate(90deg) translateY(-10px) scale(0); opacity: 0; }}
-        @keyframes confetti-4 { to { transform: rotate(120deg) translateY(-12px) scale(0); opacity: 0; }}
-        @keyframes confetti-5 { to { transform: rotate(150deg) translateY(-14px) scale(0); opacity: 0; }}
-        @keyframes confetti-6 { to { transform: rotate(180deg) translateY(-10px) scale(0); opacity: 0; }}
-        @keyframes confetti-7 { to { transform: rotate(210deg) translateY(-12px) scale(0); opacity: 0; }}
-        @keyframes confetti-8 { to { transform: rotate(240deg) translateY(-14px) scale(0); opacity: 0; }}
-        @keyframes confetti-9 { to { transform: rotate(270deg) translateY(-10px) scale(0); opacity: 0; }}
-        @keyframes confetti-10 { to { transform: rotate(300deg) translateY(-12px) scale(0); opacity: 0; }}
-        @keyframes confetti-11 { to { transform: rotate(330deg) translateY(-14px) scale(0); opacity: 0; }}
+        @keyframes confetti-0 {
+          to {
+            transform: rotate(0deg) translateY(-10px) scale(0);
+            opacity: 0;
+          }
+        }
+        @keyframes confetti-1 {
+          to {
+            transform: rotate(30deg) translateY(-12px) scale(0);
+            opacity: 0;
+          }
+        }
+        @keyframes confetti-2 {
+          to {
+            transform: rotate(60deg) translateY(-14px) scale(0);
+            opacity: 0;
+          }
+        }
+        @keyframes confetti-3 {
+          to {
+            transform: rotate(90deg) translateY(-10px) scale(0);
+            opacity: 0;
+          }
+        }
+        @keyframes confetti-4 {
+          to {
+            transform: rotate(120deg) translateY(-12px) scale(0);
+            opacity: 0;
+          }
+        }
+        @keyframes confetti-5 {
+          to {
+            transform: rotate(150deg) translateY(-14px) scale(0);
+            opacity: 0;
+          }
+        }
+        @keyframes confetti-6 {
+          to {
+            transform: rotate(180deg) translateY(-10px) scale(0);
+            opacity: 0;
+          }
+        }
+        @keyframes confetti-7 {
+          to {
+            transform: rotate(210deg) translateY(-12px) scale(0);
+            opacity: 0;
+          }
+        }
+        @keyframes confetti-8 {
+          to {
+            transform: rotate(240deg) translateY(-14px) scale(0);
+            opacity: 0;
+          }
+        }
+        @keyframes confetti-9 {
+          to {
+            transform: rotate(270deg) translateY(-10px) scale(0);
+            opacity: 0;
+          }
+        }
+        @keyframes confetti-10 {
+          to {
+            transform: rotate(300deg) translateY(-12px) scale(0);
+            opacity: 0;
+          }
+        }
+        @keyframes confetti-11 {
+          to {
+            transform: rotate(330deg) translateY(-14px) scale(0);
+            opacity: 0;
+          }
+        }
       `}</style>
     </div>
   );
 };
 
 export default function Home() {
-  const [posts, setPosts] = useState([])
-  const [initialLoading, setInitialLoading] = useState(true)
-  const [loading, setLoading] = useState(false)
-  const [refreshing, setRefreshing] = useState(false)
-  const [pullProgress, setPullProgress] = useState(0)
+  const [posts, setPosts] = useState([]);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [pullProgress, setPullProgress] = useState(0);
   const [pullStartY, setPullStartY] = useState(0);
   const [pullMoveY, setPullMoveY] = useState(0);
   const [isPulling, setIsPulling] = useState(false);
   const pullThreshold = 80; // pixels to pull before refresh triggers
-  const [showUploadModal, setShowUploadModal] = useState(false)
-  const [showTagModal, setShowTagModal] = useState(false)
-  const [selectedImage, setSelectedImage] = useState(null)
-  const [previewUrl, setPreviewUrl] = useState(null)
-  const [showCamera, setShowCamera] = useState(false)
-  const [cameraError, setCameraError] = useState(null)
-  const [productTags, setProductTags] = useState([])
-  const [tagPosition, setTagPosition] = useState({ x: 0, y: 0 })
-  const [currentTag, setCurrentTag] = useState(null)
-  const [selectedTag, setSelectedTag] = useState(null)
-  const [likedPosts, setLikedPosts] = useState(new Set())
-  const [confettiPosts, setConfettiPosts] = useState(new Set())
-  const { userID } = useContext(AuthContext)
-  
-  const observerTarget = useRef(null)
-  const nextPostId = useRef(1)
-  const fileInputRef = useRef(null)
-  const videoRef = useRef(null)
-  const streamRef = useRef(null)
-  const canvasRef = useRef(null)
-  const imageRef = useRef(null)
-  const [showShareMenu, setShowShareMenu] = useState(null)
-  const [copiedPostId, setCopiedPostId] = useState(null)
-  const shareMenuRef = useRef(null)
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraError, setCameraError] = useState(null);
+  const [productTags, setProductTags] = useState([]);
+  const [tagPosition, setTagPosition] = useState({ x: 0, y: 0 });
+  const [currentTag, setCurrentTag] = useState(null);
+  const [selectedTag, setSelectedTag] = useState(null);
+  const [likedPosts, setLikedPosts] = useState(new Set());
+  const [confettiPosts, setConfettiPosts] = useState(new Set());
+  const { userID } = useContext(AuthContext);
+
+  const observerTarget = useRef(null);
+  const nextPostId = useRef(1);
+  const fileInputRef = useRef(null);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const canvasRef = useRef(null);
+  const imageRef = useRef(null);
+  const [showShareMenu, setShowShareMenu] = useState(null);
+  const [copiedPostId, setCopiedPostId] = useState(null);
+  const shareMenuRef = useRef(null);
   const navigate = useNavigate();
 
   const loadMorePosts = () => {
     if (loading) return;
-    setLoading(true)
-    const newPosts = Array.from({ length: 3 }, () => generatePost(nextPostId.current++))
-    setPosts(prev => [...prev, ...newPosts])
-    setLoading(false)
-  }
+    setLoading(true);
+    const newPosts = Array.from({ length: 3 }, () =>
+      generatePost(nextPostId.current++)
+    );
+    setPosts((prev) => [...prev, ...newPosts]);
+    setLoading(false);
+  };
 
   const fetchPosts = async () => {
     try {
-      const authClientInstance = new AuthClient()
-      
+      const authClientInstance = new AuthClient();
+
       // Get all users
-      const users = await authClientInstance.getUsers()
-      
+      const users = await authClientInstance.getUsers();
+
       // Get posts for each user
-      const allPosts = []
+      const allPosts = [];
       for (const user of users) {
         try {
-          const userPosts = await authClientInstance.getUserPosts(user.user_id)
+          const userPosts = await authClientInstance.getUserPosts(user.user_id);
           // Add user info to each post
-          const postsWithUser = userPosts.map(post => ({
+          const postsWithUser = userPosts.map((post) => ({
             ...post,
-            user: user
-          }))
-          allPosts.push(...postsWithUser)
+            user: user,
+          }));
+          allPosts.push(...postsWithUser);
         } catch (error) {
-          console.error(`Error fetching posts for user ${user.user_id}:`, error)
+          console.error(
+            `Error fetching posts for user ${user.user_id}:`,
+            error
+          );
         }
       }
 
       // Sort posts by post_id (most recent first)
-      allPosts.sort((a, b) => b.post_id - a.post_id)
-      setPosts(allPosts)
+      allPosts.sort((a, b) => b.post_id - a.post_id);
+      setPosts(allPosts);
     } catch (error) {
-      console.error('Error fetching posts:', error)
+      console.error("Error fetching posts:", error);
     } finally {
-      setInitialLoading(false)
-      setRefreshing(false)
+      setInitialLoading(false);
+      setRefreshing(false);
     }
-  }
+  };
 
   const handleTouchStart = (e) => {
     // Only enable pull to refresh when at the top of the page
@@ -149,7 +228,7 @@ export default function Home() {
 
     const y = e.touches[0].clientY;
     setPullMoveY(y);
-    
+
     const pullDistance = y - pullStartY;
     if (pullDistance > 0) {
       setPullProgress(Math.min(pullDistance / pullThreshold, 1));
@@ -171,46 +250,48 @@ export default function Home() {
   };
 
   useEffect(() => {
-    document.addEventListener('touchstart', handleTouchStart, { passive: false });
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleTouchEnd);
+    document.addEventListener("touchstart", handleTouchStart, {
+      passive: false,
+    });
+    document.addEventListener("touchmove", handleTouchMove, { passive: false });
+    document.addEventListener("touchend", handleTouchEnd);
 
     return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener("touchstart", handleTouchStart);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleTouchEnd);
     };
   }, [isPulling, pullStartY, refreshing]);
 
   useEffect(() => {
-    fetchPosts()
-  }, [])
+    fetchPosts();
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !loading && !initialLoading) {
-          loadMorePosts()
+          loadMorePosts();
         }
       },
       { threshold: 1.0 }
-    )
+    );
 
     if (observerTarget.current) {
-      observer.observe(observerTarget.current)
+      observer.observe(observerTarget.current);
     }
 
-    return () => observer.disconnect()
-  }, [loading, initialLoading])
+    return () => observer.disconnect();
+  }, [loading, initialLoading]);
 
   useEffect(() => {
     if (showUploadModal) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     }
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, [showUploadModal]);
 
@@ -223,13 +304,13 @@ export default function Home() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      alert('Por favor, selecciona una imagen.');
+    if (!file.type.startsWith("image/")) {
+      alert("Por favor, selecciona una imagen.");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('La imagen no puede superar los 5MB.');
+      alert("La imagen no puede superar los 5MB.");
       return;
     }
 
@@ -241,35 +322,40 @@ export default function Home() {
   const startCamera = async () => {
     try {
       setShowCamera(true);
-      
-      await new Promise(resolve => setTimeout(resolve, 100));
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
-        audio: false
+        audio: false,
       });
-      
+
       if (!videoRef.current) {
-        throw new Error('Video element not found');
+        throw new Error("Video element not found");
       }
 
       videoRef.current.srcObject = stream;
       streamRef.current = stream;
-      
-      videoRef.current.addEventListener('canplay', function handleCanPlay() {
-        videoRef.current.removeEventListener('canplay', handleCanPlay);
-        videoRef.current.play()
+
+      videoRef.current.addEventListener("canplay", function handleCanPlay() {
+        videoRef.current.removeEventListener("canplay", handleCanPlay);
+        videoRef.current
+          .play()
           .then(() => {
             setCameraError(null);
           })
-          .catch(err => {
-            console.error('Error playing video:', err);
-            setCameraError('Error al iniciar la cámara. Por favor, recarga la página.');
+          .catch((err) => {
+            console.error("Error playing video:", err);
+            setCameraError(
+              "Error al iniciar la cámara. Por favor, recarga la página."
+            );
           });
       });
     } catch (err) {
-      console.error('Error accessing camera:', err);
-      setCameraError('No se pudo acceder a la cámara. Por favor, permite el acceso.');
+      console.error("Error accessing camera:", err);
+      setCameraError(
+        "No se pudo acceder a la cámara. Por favor, permite el acceso."
+      );
       setShowCamera(false);
     }
   };
@@ -277,39 +363,45 @@ export default function Home() {
   const capturePhoto = () => {
     try {
       if (!videoRef.current || !canvasRef.current) {
-        console.error('Video or canvas element not found');
+        console.error("Video or canvas element not found");
         return;
       }
 
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      
+
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
 
       const context = canvas.getContext("2d");
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          console.error('Failed to capture photo');
-          return;
-        }
+      canvas.toBlob(
+        async (blob) => {
+          if (!blob) {
+            console.error("Failed to capture photo");
+            return;
+          }
 
-        const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
-        setSelectedImage(file);
-        setPreviewUrl(URL.createObjectURL(blob));
-        stopCamera();
-      }, 'image/jpeg', 0.8);
+          const file = new File([blob], "photo.jpg", { type: "image/jpeg" });
+          setSelectedImage(file);
+          setPreviewUrl(URL.createObjectURL(blob));
+          stopCamera();
+        },
+        "image/jpeg",
+        0.8
+      );
     } catch (error) {
-      console.error('Error capturing photo:', error);
-      setCameraError('Error al capturar la foto. Por favor, inténtalo de nuevo.');
+      console.error("Error capturing photo:", error);
+      setCameraError(
+        "Error al capturar la foto. Por favor, inténtalo de nuevo."
+      );
     }
   };
 
   const stopCamera = () => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
     if (videoRef.current) {
@@ -324,26 +416,26 @@ export default function Home() {
     const rect = imageRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
-    
+
     setTagPosition({ x, y });
-    setCurrentTag('new'); // Use 'new' to indicate we're creating a new tag
+    setCurrentTag("new"); // Use 'new' to indicate we're creating a new tag
   };
 
   const handleAddTag = (tag) => {
-    if (currentTag === 'new') {
+    if (currentTag === "new") {
       // Add new tag
-      setProductTags(tags => [...tags, { ...tag, position: tagPosition }]);
-    } else if (typeof currentTag === 'number') {
+      setProductTags((tags) => [...tags, { ...tag, position: tagPosition }]);
+    } else if (typeof currentTag === "number") {
       // Edit existing tag
-      setProductTags(tags => 
-        tags.map((t, i) => i === currentTag ? { ...t, ...tag } : t)
+      setProductTags((tags) =>
+        tags.map((t, i) => (i === currentTag ? { ...t, ...tag } : t))
       );
     }
     setCurrentTag(null); // This will close the details modal but keep the tagging mode active
   };
 
   const handleRemoveTag = (index) => {
-    setProductTags(tags => tags.filter((_, i) => i !== index));
+    setProductTags((tags) => tags.filter((_, i) => i !== index));
   };
 
   const handleEditTag = (index) => {
@@ -353,40 +445,43 @@ export default function Home() {
   };
 
   const handleTagClick = (tag) => {
-    setSelectedTag(tag)
-  }
+    setSelectedTag(tag);
+  };
 
   const handleLike = (postId) => {
-    setLikedPosts(prev => {
-      const newLiked = new Set(prev)
+    setLikedPosts((prev) => {
+      const newLiked = new Set(prev);
       if (newLiked.has(postId)) {
-        newLiked.delete(postId)
+        newLiked.delete(postId);
       } else {
-        newLiked.add(postId)
+        newLiked.add(postId);
         // Trigger confetti animation
-        setConfettiPosts(prev => new Set(prev).add(postId))
+        setConfettiPosts((prev) => new Set(prev).add(postId));
         setTimeout(() => {
-          setConfettiPosts(prev => {
-            const newSet = new Set(prev)
-            newSet.delete(postId)
-            return newSet
-          })
-        }, 500)
+          setConfettiPosts((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(postId);
+            return newSet;
+          });
+        }, 500);
       }
-      return newLiked
-    })
-  }
+      return newLiked;
+    });
+  };
 
   // Add click outside listener for share menu
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (shareMenuRef.current && !shareMenuRef.current.contains(event.target)) {
+      if (
+        shareMenuRef.current &&
+        !shareMenuRef.current.contains(event.target)
+      ) {
         setShowShareMenu(null);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleShare = (postId) => {
@@ -396,7 +491,7 @@ export default function Home() {
   const handleCopyLink = (post) => {
     const productLink = post.tags[0]?.link;
     if (!productLink) return;
-    
+
     navigator.clipboard.writeText(productLink).then(() => {
       setCopiedPostId(post.post_id);
       setTimeout(() => setCopiedPostId(null), 2000);
@@ -406,17 +501,17 @@ export default function Home() {
   const handleWhatsAppShare = (post) => {
     const productLink = post.tags[0]?.link;
     if (!productLink) return;
-    
+
     const message = `Check out this product from ${post.user.user_alias} on Wearvana: ${productLink}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    window.open(whatsappUrl, "_blank");
     setShowShareMenu(null);
   };
 
   const handleEmailShare = (post) => {
     const productLink = post.tags[0]?.link;
     if (!productLink) return;
-    
+
     const mailtoUrl = `mailto:?subject=Check out this product on Wearvana&body=Check out this product from ${post.user.user_alias}: ${productLink}`;
     window.location.href = mailtoUrl;
     setShowShareMenu(null);
@@ -434,7 +529,10 @@ export default function Home() {
             <div className="flex-grow max-w-[630px]">
               <div className="max-w-[470px] mx-auto md:mx-0">
                 {[...Array(3)].map((_, index) => (
-                  <div key={index} className="bg-white rounded-xl shadow-sm mb-6 overflow-hidden">
+                  <div
+                    key={index}
+                    className="bg-white rounded-xl shadow-sm mb-6 overflow-hidden"
+                  >
                     <div className="flex items-center gap-3 p-4">
                       <Skeleton className="w-8 h-8 rounded-full" />
                       <Skeleton className="w-24 h-4" />
@@ -467,27 +565,36 @@ export default function Home() {
       <div className="max-w-[975px] mx-auto px-0 md:px-8 relative">
         {/* Refresh Spinner - Only show during pull-to-refresh */}
         {(pullProgress > 0 || refreshing) && (
-          <div 
+          <div
             className={`absolute left-0 right-0 -top-16 flex justify-center items-center h-16 transition-all duration-200 ${
-              (pullProgress > 0 || refreshing) ? 'translate-y-full opacity-100' : 'translate-y-0 opacity-0'
+              pullProgress > 0 || refreshing
+                ? "translate-y-full opacity-100"
+                : "translate-y-0 opacity-0"
             }`}
           >
-            <div 
+            <div
               className={`rounded-full h-8 w-8 border-2 border-wearvana-accent border-t-transparent ${
-                refreshing ? 'animate-[spin_1.5s_linear_infinite]' : 'transition-transform duration-200'
+                refreshing
+                  ? "animate-[spin_1.5s_linear_infinite]"
+                  : "transition-transform duration-200"
               }`}
               style={{
-                transform: refreshing ? 'none' : `rotate(${pullProgress * 360}deg)`
+                transform: refreshing
+                  ? "none"
+                  : `rotate(${pullProgress * 360}deg)`,
               }}
             />
           </div>
         )}
 
         {/* Main Content - Add sliding animation */}
-        <div 
+        <div
           className="transition-transform duration-200"
           style={{
-            transform: pullProgress > 0 ? `translateY(${Math.min(pullProgress * 64, 64)}px)` : 'translateY(0)'
+            transform:
+              pullProgress > 0
+                ? `translateY(${Math.min(pullProgress * 64, 64)}px)`
+                : "translateY(0)",
           }}
         >
           <div className="flex flex-col lg:flex-row gap-8">
@@ -495,7 +602,10 @@ export default function Home() {
             <div className="flex-grow max-w-[630px]">
               <div className="max-w-[470px] mx-auto md:mx-0">
                 {posts.map((post) => (
-                  <div key={post.post_id} className="bg-white rounded-xl shadow-sm mb-6 overflow-hidden">
+                  <div
+                    key={post.post_id}
+                    className="bg-white rounded-xl shadow-sm mb-6 overflow-hidden"
+                  >
                     {/* Post Header */}
                     <div className="flex items-center gap-3 p-4">
                       <button
@@ -503,7 +613,10 @@ export default function Home() {
                         className="hover:opacity-80 transition-opacity"
                       >
                         <img
-                          src={post.user.profile_picture_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user.user_alias}`}
+                          src={
+                            post.user.profile_picture_url ||
+                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user.user_alias}`
+                          }
                           alt={post.user.user_alias}
                           className="w-8 h-8 rounded-full"
                         />
@@ -543,31 +656,35 @@ export default function Home() {
                     <div className="p-4">
                       <div className="flex items-center gap-4 mb-2">
                         <div className="relative">
-                          <button 
+                          <button
                             onClick={() => handleLike(post.post_id)}
                             className={`transform transition-all duration-200 hover:scale-125 ${
-                              likedPosts.has(post.post_id) 
-                                ? 'text-red-500 scale-110' 
-                                : 'hover:text-red-500'
+                              likedPosts.has(post.post_id)
+                                ? "text-red-500 scale-110"
+                                : "hover:text-red-500"
                             }`}
                           >
-                            <Heart 
+                            <Heart
                               className={`h-6 w-6 transform transition-all duration-200 ${
-                                likedPosts.has(post.post_id) ? 'fill-current' : ''
+                                likedPosts.has(post.post_id)
+                                  ? "fill-current"
+                                  : ""
                               }`}
                             />
                           </button>
-                          <LikeConfetti active={confettiPosts.has(post.post_id)} />
+                          <LikeConfetti
+                            active={confettiPosts.has(post.post_id)}
+                          />
                         </div>
                         <div className="relative">
-                          <button 
+                          <button
                             onClick={() => handleShare(post.post_id)}
                             className="hover:text-blue-500 transition-colors"
                           >
                             <Share2 className="h-6 w-6" />
                           </button>
                           {showShareMenu === post.post_id && (
-                            <div 
+                            <div
                               ref={shareMenuRef}
                               className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg py-2 min-w-[200px] z-50"
                             >
@@ -578,7 +695,9 @@ export default function Home() {
                                 {copiedPostId === post.post_id ? (
                                   <>
                                     <Check className="h-4 w-4 text-green-500" />
-                                    <span className="text-green-500">Copied!</span>
+                                    <span className="text-green-500">
+                                      Copied!
+                                    </span>
                                   </>
                                 ) : (
                                   <>
@@ -610,9 +729,13 @@ export default function Home() {
                       <div className="space-y-1">
                         {post.tags.map((tag, index) => (
                           <div key={index} className="text-sm">
-                            <span className="font-medium">{tag.clothing_name}</span>
+                            <span className="font-medium">
+                              {tag.clothing_name}
+                            </span>
                             <span className="text-gray-500"> · </span>
-                            <span className="text-wearvana-accent">{tag.current_price}€</span>
+                            <span className="text-wearvana-accent">
+                              {tag.current_price}€
+                            </span>
                             <span className="text-gray-500"> · </span>
                             <span className="text-gray-500">{tag.brand}</span>
                           </div>
@@ -630,7 +753,7 @@ export default function Home() {
         </div>
 
         {/* Upload Button */}
-        <button 
+        <button
           onClick={() => setShowUploadModal(true)}
           className="fixed md:hidden bottom-20 right-4 wearvana-button p-3 rounded-full shadow-lg z-40"
           aria-label="Upload new post"
@@ -639,11 +762,14 @@ export default function Home() {
         </button>
 
         {/* Upload Modal */}
-        <UploadModal isOpen={showUploadModal} onClose={() => setShowUploadModal(false)} />
+        <UploadModal
+          isOpen={showUploadModal}
+          onClose={() => setShowUploadModal(false)}
+        />
 
         {/* Tag Modal */}
         {showTagModal && currentTag !== null && (
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
@@ -653,53 +779,73 @@ export default function Home() {
           >
             <div className="bg-white w-full max-w-sm rounded-xl p-6">
               <h3 className="text-lg font-semibold mb-4">
-                {typeof currentTag === 'number' ? 'Editar producto' : 'Detalles del producto'}
+                {typeof currentTag === "number"
+                  ? "Editar producto"
+                  : "Detalles del producto"}
               </h3>
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   const formData = new FormData(e.target);
                   handleAddTag({
-                    name: formData.get('name'),
-                    price: formData.get('price'),
-                    link: formData.get('link'),
+                    name: formData.get("name"),
+                    price: formData.get("price"),
+                    link: formData.get("link"),
                   });
                 }}
                 className="space-y-4"
               >
                 <div>
-                  <label className="block text-sm font-medium mb-1">Nombre del producto</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Nombre del producto
+                  </label>
                   <input
                     type="text"
                     name="name"
                     className="wearvana-input"
                     required
-                    defaultValue={currentTag !== null && typeof currentTag === 'number' ? productTags[currentTag].name : ''}
+                    defaultValue={
+                      currentTag !== null && typeof currentTag === "number"
+                        ? productTags[currentTag].name
+                        : ""
+                    }
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Precio (€)</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Precio (€)
+                  </label>
                   <input
                     type="number"
                     name="price"
                     step="0.01"
                     className="wearvana-input"
                     required
-                    defaultValue={currentTag !== null && typeof currentTag === 'number' ? productTags[currentTag].price : ''}
+                    defaultValue={
+                      currentTag !== null && typeof currentTag === "number"
+                        ? productTags[currentTag].price
+                        : ""
+                    }
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Enlace del producto</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Enlace del producto
+                  </label>
                   <input
                     type="url"
                     name="link"
                     className="wearvana-input"
                     required
-                    defaultValue={currentTag !== null && typeof currentTag === 'number' ? productTags[currentTag].link : ''}
+                    defaultValue={
+                      currentTag !== null && typeof currentTag === "number"
+                        ? productTags[currentTag].link
+                        : ""
+                    }
                   />
                 </div>
                 <div className="flex gap-2 pt-2">
-                  {typeof currentTag === 'number' && (
+                  {typeof currentTag === "number" && (
                     <button
                       type="button"
                       onClick={() => {
@@ -718,10 +864,7 @@ export default function Home() {
                   >
                     Cancelar
                   </button>
-                  <button
-                    type="submit"
-                    className="flex-1 wearvana-button"
-                  >
+                  <button type="submit" className="flex-1 wearvana-button">
                     Guardar
                   </button>
                 </div>
@@ -745,10 +888,7 @@ export default function Home() {
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                   <div className="text-white text-center px-4">
                     <p className="mb-4">{cameraError}</p>
-                    <button
-                      onClick={stopCamera}
-                      className="wearvana-button"
-                    >
+                    <button onClick={stopCamera} className="wearvana-button">
                       Cerrar
                     </button>
                   </div>
@@ -776,13 +916,17 @@ export default function Home() {
           >
             <div
               className="bg-white rounded-xl p-6 max-w-sm w-full"
-              onClick={e => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-lg font-semibold mb-4">{selectedTag.clothing_name}</h3>
+              <h3 className="text-lg font-semibold mb-4">
+                {selectedTag.clothing_name}
+              </h3>
               <div className="space-y-2">
                 <p>
                   <span className="font-medium">Price: </span>
-                  <span className="text-wearvana-accent">{selectedTag.current_price}€</span>
+                  <span className="text-wearvana-accent">
+                    {selectedTag.current_price}€
+                  </span>
                 </p>
                 <p>
                   <span className="font-medium">Brand: </span>
@@ -804,4 +948,3 @@ export default function Home() {
     </div>
   );
 }
-

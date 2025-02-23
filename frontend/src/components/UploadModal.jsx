@@ -71,7 +71,7 @@ export default function UploadModal({ isOpen, onClose }) {
           facingMode: "environment",
           width: { ideal: 1080 },
           height: { ideal: 1080 },
-          aspectRatio: { ideal: 1 }
+          aspectRatio: { ideal: 1 },
         },
         audio: false,
       });
@@ -163,8 +163,6 @@ export default function UploadModal({ isOpen, onClose }) {
     const naturalWidth = imageRef.current.naturalWidth;
     const min_image_x = ((rect.width - naturalWidth) / 2 / rect.width) * 100;
     const max_image_x = 100 - min_image_x;
-    console.log(rect.width);
-    console.log(naturalWidth);
     const x = Math.min(
       max_image_x,
       Math.max(min_image_x, ((e.clientX - rect.left) / rect.width) * 100)
@@ -235,8 +233,6 @@ export default function UploadModal({ isOpen, onClose }) {
     const naturalWidth = imageRef.current.naturalWidth;
     const min_image_x = ((rect.width - naturalWidth) / 2 / rect.width) * 100;
     const max_image_x = 100 - min_image_x;
-    console.log(rect.width);
-    console.log(naturalWidth);
     const x = Math.min(
       max_image_x,
       Math.max(min_image_x, ((e.clientX - rect.left) / rect.width) * 100)
@@ -260,8 +256,6 @@ export default function UploadModal({ isOpen, onClose }) {
     const naturalWidth = imageRef.current.naturalWidth;
     const min_image_x = ((rect.width - naturalWidth) / 2 / rect.width) * 100;
     const max_image_x = 100 - min_image_x;
-    console.log(rect.width);
-    console.log(naturalWidth);
     const x = Math.min(
       max_image_x,
       Math.max(min_image_x, ((e.clientX - rect.left) / rect.width) * 100)
@@ -277,8 +271,6 @@ export default function UploadModal({ isOpen, onClose }) {
       )
     );
     setDraggingTag(null);
-    console.log("Tag dragged");
-    console.log(productTags);
   };
 
   if (!isOpen) return null;
