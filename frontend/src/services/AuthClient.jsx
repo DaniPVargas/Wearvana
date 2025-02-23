@@ -146,4 +146,10 @@ export default class AuthClient {
     if (!response.ok) throw new Error("Erro ao publicar o post");
     return;
   }
+
+  async getUsers() {
+    const response = await fetch(`${this.apiBaseUrl}/users`);
+    if (!response.ok) throw new Error("Erro ao obter os usuarios");
+    return await response.json();
+  }
 }
