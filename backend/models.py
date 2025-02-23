@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 
+
 class Reference(BaseModel):
     clothing_name: str
     link: str
@@ -29,8 +30,10 @@ class User(BaseModel):
     description: str
     profile_picture_url: Optional[str] = None
 
+
 class AuthBody(BaseModel):
     token: str
+
 
 class CreateUserBody(BaseModel):
     complete_name: str
@@ -38,13 +41,16 @@ class CreateUserBody(BaseModel):
     description: Optional[str] = None
     profile_picture_url: Optional[str] = None
 
+
 class FollowUserBody(BaseModel):
     followed_id: str
+
 
 class UploadPostBody(BaseModel):
     title: str
     image_url: str
     tags: list[Tag]
+
 
 class UpdateUserBody(BaseModel):
     complete_name: Optional[str] = None
