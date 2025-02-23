@@ -72,7 +72,6 @@ export default function Register() {
             imageFile,
             response.user_id
           );
-          console.log("Image URL", imageUrl);
           authClientInstance.updateUser(
             response.user_id,
             fullName,

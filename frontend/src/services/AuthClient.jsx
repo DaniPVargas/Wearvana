@@ -23,7 +23,7 @@ export default class AuthClient {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        completeName: fullName,
+        complete_name: fullName,
         user_alias: alias,
         description: description,
         profile_picture_url: profilePictureUrl,
@@ -36,13 +36,14 @@ export default class AuthClient {
     return await response.json();
   }
 
-  async updateUser(userID, description, profilePictureUrl) {
+  async updateUser(userID, fullName, description, profilePictureUrl) {
     const response = await fetch(`${this.apiBaseUrl}/users/${userID}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        complete_name: fullName,
         description: description,
         profile_picture_url: profilePictureUrl,
       }),
