@@ -20,6 +20,37 @@ After that, all the necessary dependencies will be installed (extremely fast, as
 However, if you are not ready to embrace the future just yet, we have also think in you. Inside the `backend` folder, we have left a `requirements.txt` file to install with classic `pip install -r requirements.txt` command. Finally, the command to run the backend will be `uvicorn --host 0.0.0.0 --port 8000 main:app`.
 
 ### Wearvana frontend
+To run the Wearvana frontend locally, you'll need Node.js installed on your system. The frontend is built using modern web technologies including React, Vite, and Tailwind CSS for a fast and responsive user experience.
+
+First, navigate to the frontend directory:
+
+```bash
+cd frontend
+```
+
+Then, install all the necessary dependencies using npm (Node Package Manager):
+
+```bash
+npm install
+```
+
+This will install all required packages specified in the `package.json` file. Once the installation is complete, you can start the development server by running:
+
+```bash
+npm run dev
+```
+
+This command will start the Vite development server, which provides features like Hot Module Replacement (HMR) for a smooth development experience. The frontend will be available at `http://localhost:5173` by default.
+
+For production builds, you can use:
+
+```bash
+npm run build
+```
+
+This will create an optimized production build in the `dist` directory, which you can then serve using any static file server.
+
+Make sure to keep both the frontend and backend running simultaneously for the full Wearvana experience. The frontend will automatically handle API requests to the backend, providing a seamless user interface for interacting with the Wearvana platform.
 
 ## Deploying Wearvana
 
