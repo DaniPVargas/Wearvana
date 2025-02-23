@@ -1,9 +1,10 @@
-import { MapPin, Link as LinkIcon, UserPlus, UserMinus } from 'lucide-react';
-import { useState, useEffect, useContext } from 'react';
+import { MapPin, Link as LinkIcon, UserPlus, UserMinus, Heart, Share2, Copy, Mail, MessageCircle, Check, X, ArrowLeft } from 'lucide-react';
+import { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Skeleton from '../components/Skeleton';
 import AuthClient from '../services/AuthClient';
 import AuthContext from '../context/AuthProvider';
+import PostsGridFeed from '../components/PostsGridFeed';
 
 export default function UserProfile() {
   const { username } = useParams();
@@ -13,6 +14,14 @@ export default function UserProfile() {
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
   const { userID } = useContext(AuthContext);
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [likedPosts, setLikedPosts] = useState(new Set());
+  const [confettiPosts, setConfettiPosts] = useState(new Set());
+  const [showShareMenu, setShowShareMenu] = useState(null);
+  const [copiedPostId, setCopiedPostId] = useState(null);
+  const shareMenuRef = useRef(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const selectedPostRef = useRef(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -61,6 +70,80 @@ export default function UserProfile() {
   const toggleFollow = () => {
     setIsFollowing(!isFollowing);
   };
+
+  const handleLike = (postId) => {
+    setLikedPosts(prev => {
+      const newLiked = new Set(prev)
+      if (newLiked.has(postId)) {
+        newLiked.delete(postId)
+      } else {
+        newLiked.add(postId)
+        // Trigger confetti animation
+        setConfettiPosts(prev => new Set(prev).add(postId))
+        setTimeout(() => {
+          setConfettiPosts(prev => {
+            const newSet = new Set(prev)
+            newSet.delete(postId)
+            return newSet
+          })
+        }, 500)
+      }
+      return newLiked
+    })
+  }
+
+  const handleShare = (postId) => {
+    setShowShareMenu(postId);
+  };
+
+  const handleCopyLink = (post) => {
+    const productLink = post.tags[0]?.link;
+    if (!productLink) return;
+    
+    navigator.clipboard.writeText(productLink).then(() => {
+      setCopiedPostId(post.post_id);
+      setTimeout(() => setCopiedPostId(null), 2000);
+    });
+  };
+
+  const handleWhatsAppShare = (post) => {
+    const productLink = post.tags[0]?.link;
+    if (!productLink) return;
+    
+    const message = `Check out this product from ${post.user.user_alias} on Wearvana: ${productLink}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+    setShowShareMenu(null);
+  };
+
+  const handleEmailShare = (post) => {
+    const productLink = post.tags[0]?.link;
+    if (!productLink) return;
+    
+    const mailtoUrl = `mailto:?subject=Check out this product on Wearvana&body=Check out this product from ${post.user.user_alias}: ${productLink}`;
+    window.location.href = mailtoUrl;
+    setShowShareMenu(null);
+  };
+
+  const handlePostClick = (post) => {
+    setSelectedPost(post);
+    // We'll scroll to the post after the state update and render
+    setTimeout(() => {
+      selectedPostRef.current?.scrollIntoView({ behavior: 'instant', block: 'start' });
+    }, 0);
+  };
+
+  // Add click outside listener for share menu
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (shareMenuRef.current && !shareMenuRef.current.contains(event.target)) {
+        setShowShareMenu(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   if (isLoading) {
     return (
@@ -123,79 +206,60 @@ export default function UserProfile() {
   return (
     <div className="pb-4 min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
-          {/* Profile Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
-            <div className="flex items-center gap-6">
-              <img
-                src={user.profile_picture_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.user_alias}`}
-                alt={user.user_alias}
-                className="w-20 h-20 md:w-32 md:h-32 rounded-full border-2 border-gray-200"
-              />
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold">{user.user_alias}</h1>
-                <p className="text-gray-600 text-lg">@{user.user_alias.toLowerCase()}</p>
-              </div>
-            </div>
-            <button 
-              onClick={toggleFollow}
-              className={`wearvana-button flex items-center gap-2 self-start md:self-center ${
-                isFollowing 
-                  ? 'bg-white !text-black border border-gray-300 hover:border-gray-400' 
-                  : ''
-              }`}
-            >
-              {isFollowing ? (
-                <>
-                  <UserMinus size={16} />
-                  <span>Siguiendo</span>
-                </>
-              ) : (
-                <>
-                  <UserPlus size={16} />
-                  <span>Seguir</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* Bio Section */}
-          <div className="mb-6 max-w-2xl">
-            <p className="text-gray-800 mb-2 text-lg">{user.description || "No description provided"}</p>
-          </div>
-
-          {/* Stats */}
-          <div className="flex justify-around py-4 border-y border-gray-200 max-w-2xl">
-            <div className="text-center">
-              <div className="font-bold text-xl">{posts.length}</div>
-              <div className="text-gray-600">Publicaciones</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Posts Grid */}
-        <div className="bg-white rounded-xl p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-6">Publicaciones</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {posts.map((post) => (
-              <div key={post.post_id} className="relative aspect-square group">
+        {!selectedPost && (
+          <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
+            {/* Profile Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+              <div className="flex items-center gap-6">
                 <img
-                  src={post.image_url}
-                  alt={post.title}
-                  className="w-full h-full object-cover rounded-lg"
+                  src={user.profile_picture_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.user_alias}`}
+                  alt={user.user_alias}
+                  className="w-20 h-20 md:w-32 md:h-32 rounded-full border-2 border-gray-200"
                 />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                  <div className="text-center text-white p-2">
-                    <p className="font-medium">{post.title}</p>
-                    {post.tags && post.tags[0] && (
-                      <p className="text-sm">{post.tags[0].current_price}€</p>
-                    )}
-                  </div>
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold">{user.user_alias}</h1>
+                  <p className="text-gray-600 text-lg">@{user.user_alias.toLowerCase()}</p>
                 </div>
               </div>
-            ))}
+              <button 
+                onClick={toggleFollow}
+                className={`wearvana-button flex items-center gap-2 self-start md:self-center ${
+                  isFollowing 
+                    ? 'bg-white !text-black border border-gray-300 hover:border-gray-400' 
+                    : ''
+                }`}
+              >
+                {isFollowing ? (
+                  <>
+                    <UserMinus size={16} />
+                    <span>Siguiendo</span>
+                  </>
+                ) : (
+                  <>
+                    <UserPlus size={16} />
+                    <span>Seguir</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Bio Section */}
+            <div className="mb-6 max-w-2xl">
+              <p className="text-gray-800 mb-2 text-lg">{user.description || "No description provided"}</p>
+            </div>
+
+            {/* Stats */}
+            <div className="flex justify-around py-4 border-y border-gray-200 max-w-2xl">
+              <div className="text-center">
+                <div className="font-bold text-xl">{posts.length}</div>
+                <div className="text-gray-600">Publicaciones</div>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Posts Section */}
+        <PostsGridFeed posts={posts} user={user} />
       </div>
     </div>
   );

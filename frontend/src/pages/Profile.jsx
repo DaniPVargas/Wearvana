@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import AuthContext from "../context/AuthProvider";
 import AuthClient from "../services/AuthClient";
 import Skeleton from "../components/Skeleton";
+import PostsGridFeed from '../components/PostsGridFeed';
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -307,24 +308,7 @@ export default function Profile() {
 
         {/* Posts Grid */}
         <div className="bg-white rounded-xl p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-6">Mis Publicaciones</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {posts.map((post) => (
-              <div key={post.id} className="relative aspect-square group">
-                <img
-                  src={post.image_url}
-                  alt={post.title}
-                  className="w-full h-full object-cover rounded-lg"
-                />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                  <div className="text-center text-white p-2">
-                    <p className="font-medium">{post.title}</p>
-                    {post.price && <p className="text-sm">{post.price}€</p>}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <PostsGridFeed posts={posts} user={user} />
         </div>
       </div>
 
