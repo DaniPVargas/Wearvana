@@ -267,7 +267,10 @@ export default function Explore() {
     window.scrollTo(0, 0);
   }, []);
 
-  useEffect(() => {
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
     // Find if any prestablished category fit into the query
     let foundCategory = 5;
     for (const [key, keywords] of Object.entries(categoryKeywords)) {
@@ -277,11 +280,6 @@ export default function Explore() {
       }
     }
     setCategory(foundCategory);
-  }, [searchQuery]);
-
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
 
     setIsLoading(true);
     setHasSearched(true);
