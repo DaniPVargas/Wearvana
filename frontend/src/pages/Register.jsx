@@ -8,18 +8,19 @@ const PASSWORDLESS_API_KEY = "wearvana:public:a72fe9ba831b4292808084b49406b3d3";
 const PASSWORDLESS_API_URL = "https://v4.passwordless.dev";
 
 export default function Register() {
-  const aliasRef = useRef(null);
+  const nameRef = useRef(null);
+  const [fullName, setFullName] = useState("");
   const [alias, setAlias] = useState("");
   const [description, setDescription] = useState("");
   const [errMsg, setErrMsg] = useState("");
   const { setAuth, setUserID } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const isFormValid = alias.trim() && description.trim();
+  const isFormValid = fullName.trim() && alias.trim() && description.trim();
 
   // Focus on the alias input when the component mounts
   useEffect(() => {
-    aliasRef.current.focus();
+    nameRef.current.focus();
   }, []);
 
   // Clean up the error message when the user changes the alias
@@ -41,7 +42,12 @@ export default function Register() {
     const authClientInstance = new AuthClient();
 
     try {
-      registerToken = await authClientInstance.register(alias, description, "");
+      registerToken = await authClientInstance.register(
+        fullName,
+        alias,
+        description,
+        ""
+      );
     } catch (error) {
       setErrMsg(error.message);
     }
@@ -69,6 +75,7 @@ export default function Register() {
           console.log("Image URL", imageUrl);
           authClientInstance.updateUser(
             response.user_id,
+            fullName,
             description,
             imageUrl
           );
@@ -92,8 +99,20 @@ export default function Register() {
         <div className="mb-4">
           <input
             type="text"
+            id="fullname"
+            ref={nameRef}
+            autoComplete="off"
+            onChange={(e) => setFullName(e.target.value)}
+            value={fullName}
+            required
+            placeholder="Nome completo"
+            className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div className="mb-4">
+          <input
+            type="text"
             id="alias"
-            ref={aliasRef}
             autoComplete="off"
             onChange={(e) => setAlias(e.target.value)}
             value={alias}
@@ -108,7 +127,7 @@ export default function Register() {
             onChange={(e) => setDescription(e.target.value)}
             value={description}
             required
-            placeholder="Descripción"
+            placeholder="Descrición"
             className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
