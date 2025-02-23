@@ -14,6 +14,7 @@ export default function UploadModal({ isOpen, onClose }) {
   const [tagPosition, setTagPosition] = useState({ x: 0, y: 0 });
   const [currentTag, setCurrentTag] = useState(null);
   const [suggestions, setSuggestions] = useState(null);
+  const [publicationStatus, setPublicationStatus] = useState(null); // null, "publishing", "success", "error"
   const [title, setTitle] = useState("");
 
   const { userID } = useContext(authContext);
@@ -43,7 +44,6 @@ export default function UploadModal({ isOpen, onClose }) {
     const fetchImageSearch = async () => {
       if (!selectedImage) return;
       const authClientInstance = new AuthClient();
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       setSuggestions(
         await authClientInstance.imageSearch(selectedImage, userID)
       );
@@ -234,13 +234,20 @@ export default function UploadModal({ isOpen, onClose }) {
   };
 
   const publishPost = async ({ image, title, tags }) => {
+    setPublicationStatus("publishing");
     const authClientInstance = new AuthClient();
-    const response = await authClientInstance.publicatePost(
-      userID,
-      image,
-      title,
-      tags
-    );
+    try {
+      await authClientInstance.publicatePost(userID, image, title, tags);
+      console.log("success");
+      setPublicationStatus("success");
+    } catch (error) {
+      setPublicationStatus("error");
+      console.log("error");
+    } finally {
+      setTimeout(() => {
+        setPublicationStatus(null);
+      }, 3000);
+    }
   };
 
   const handleDragStart = (index) => (e) => {
@@ -301,9 +308,7 @@ export default function UploadModal({ isOpen, onClose }) {
     setProductTags((tags) => [
       ...tags,
       {
-        name: suggestion.clothing_name,
-        link: suggestion.link,
-        price: suggestion.current_price,
+        ...suggestion,
         x_coord: randomX,
         y_coord: randomY,
       },
@@ -533,18 +538,18 @@ export default function UploadModal({ isOpen, onClose }) {
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 handleAddTag({
-                  clothing_name: formData.get("name"),
-                  current_price: formData.get("price"),
+                  clothing_name: formData.get("clothing_name"),
+                  current_price: formData.get("current_price"),
                   original_price: null,
                   link: formData.get("link"),
-                  brand: "Zara",
+                  brand: formData.get("brand"),
                 });
               }}
               className="space-y-4"
             >
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  Nombre del producto
+                  Nome do produto
                 </label>
                 <input
                   type="text"
@@ -553,14 +558,30 @@ export default function UploadModal({ isOpen, onClose }) {
                   required
                   defaultValue={
                     currentTag !== null && typeof currentTag === "number"
-                      ? productTags[currentTag].name
+                      ? productTags[currentTag].clothing_name
                       : ""
                   }
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  Precio (€)
+                  Marca do produto
+                </label>
+                <input
+                  type="text"
+                  name="brand"
+                  className="wearvana-input"
+                  required
+                  defaultValue={
+                    currentTag !== null && typeof currentTag === "number"
+                      ? productTags[currentTag].brand
+                      : ""
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Prezo (€)
                 </label>
                 <input
                   type="number"
@@ -570,14 +591,14 @@ export default function UploadModal({ isOpen, onClose }) {
                   required
                   defaultValue={
                     currentTag !== null && typeof currentTag === "number"
-                      ? productTags[currentTag].price
+                      ? productTags[currentTag].current_price
                       : ""
                   }
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  Enlace del producto
+                  Enlace do produto
                 </label>
                 <input
                   type="url"
