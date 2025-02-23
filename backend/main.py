@@ -288,17 +288,6 @@ async def follow_user(user_id: str, follow_user_body: FollowUserBody) -> dict[st
 
     return {"message": "User followed successfully"}
 
-
-@app.delete("/users/{user_id}/followed/{followed_id}")
-async def unfollow_user(user_id: str, followed_id: str) -> dict[str, str]:
-    return {"message": "Hello World"}
-
-
-@app.delete("/users/{user_id}")
-async def delete_user(user_id: str) -> dict[str, str]:
-    return {"message": "Hello World"}
-
-
 @app.post("/users/{user_id}/posts")
 async def create_post(user_id: str, upload_post_body: UploadPostBody) -> dict[str, str]:
     conn = get_db()
@@ -326,11 +315,6 @@ async def create_post(user_id: str, upload_post_body: UploadPostBody) -> dict[st
     conn.commit()
 
     return {"message": "Post uploaded successfully"}
-
-
-@app.delete("/users/{user_id}/posts/{post_id}")
-async def delete_post(user_id: str, post_id: str) -> dict[str, str]:
-    pass
 
 
 @app.get("/users/{user_id}/feed")
@@ -371,9 +355,6 @@ async def get_user_feed(user_id: str) -> list[Post]:
     conn.close()
 
     return [post for post in posts_results]
-
-## API Inditex
-
 
 @app.post("/clothing:text_search")
 async def search_clothing(query: str, brand: str = "") -> list[Reference]:
