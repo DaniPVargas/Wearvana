@@ -46,7 +46,9 @@ export default function Profile() {
         setUser(userData);
 
         const postsData = await authClientInstance.getUserPosts(userID);
-        setPosts(postsData);
+        // Sort posts by date in descending order (newest first)
+        const sortedPosts = postsData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        setPosts(sortedPosts);
       } catch (error) {
         console.error("Error fetching user data:", error);
       } finally {

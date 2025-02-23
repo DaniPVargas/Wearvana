@@ -32,18 +32,20 @@ export default function UserProfile() {
       try {
         const authClientInstance = new AuthClient();
         
-        // Get user directly using the ID
+        // Get user data
         const userData = await authClientInstance.getUser(username);
         setUser(userData);
 
-        // Update URL to show username instead of ID
-        if (userData && userData.user_alias !== username) {
+        // Update URL to show username instead of ID if we came from a user_id URL
+        if (userData && !isNaN(username) && userData.user_alias !== username) {
           navigate(`/user/${userData.user_alias}`, { replace: true });
         }
 
         // Fetch user's posts
-        const userPosts = await authClientInstance.getUserPosts(username);
-        setPosts(userPosts);
+        const postsData = await authClientInstance.getUserPosts(username);
+        // Sort posts by date in descending order (newest first)
+        const sortedPosts = postsData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        setPosts(sortedPosts);
       } catch (error) {
         console.error('Error fetching user data:', error);
       } finally {
