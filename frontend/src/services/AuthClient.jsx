@@ -16,13 +16,14 @@ export default class AuthClient {
     return await response.json();
   }
 
-  async register(alias, description, profilePictureUrl) {
+  async register(fullName, alias, description, profilePictureUrl) {
     const response = await fetch(`${this.apiBaseUrl}/users`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        completeName: fullName,
         user_alias: alias,
         description: description,
         profile_picture_url: profilePictureUrl,
@@ -113,7 +114,7 @@ export default class AuthClient {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-        }
+        },
       }
     );
 
@@ -124,5 +125,22 @@ export default class AuthClient {
     const searchResult = await searchResponse.json();
     console.log("Search result", searchResult);
     return searchResult;
+  }
+
+  async publicatePost(userID, image, title, tags) {
+    const response = await fetch(`${this.apiBaseUrl}/users/${userID}/posts`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: title,
+        image_url: image,
+        tags: tags,
+      }),
+    });
+
+    if (!response.ok) throw new Error("Erro ao publicar o post");
+    return;
   }
 }
