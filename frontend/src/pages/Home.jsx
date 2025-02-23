@@ -4,6 +4,7 @@ import Post from "../components/Post"
 import UploadModal from "../components/UploadModal"
 import AuthClient from "../services/AuthClient"
 import AuthContext from "../context/AuthProvider"
+import Skeleton from "../components/Skeleton"
 
 const generatePost = (id) => ({
   id,
@@ -59,6 +60,12 @@ const LikeConfetti = ({ active }) => {
 export default function Home() {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [pullProgress, setPullProgress] = useState(0)
+  const [pullStartY, setPullStartY] = useState(0);
+  const [pullMoveY, setPullMoveY] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+  const pullThreshold = 80; // pixels to pull before refresh triggers
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [showTagModal, setShowTagModal] = useState(false)
   const [selectedImage, setSelectedImage] = useState(null)
@@ -91,40 +98,88 @@ export default function Home() {
     setLoading(false)
   }
 
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const authClientInstance = new AuthClient()
-        
-        // Get all users
-        const users = await authClientInstance.getUsers()
-        
-        // Get posts for each user
-        const allPosts = []
-        for (const user of users) {
-          try {
-            const userPosts = await authClientInstance.getUserPosts(user.user_id)
-            // Add user info to each post
-            const postsWithUser = userPosts.map(post => ({
-              ...post,
-              user: user
-            }))
-            allPosts.push(...postsWithUser)
-          } catch (error) {
-            console.error(`Error fetching posts for user ${user.user_id}:`, error)
-          }
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      const authClientInstance = new AuthClient()
+      
+      // Get all users
+      const users = await authClientInstance.getUsers()
+      
+      // Get posts for each user
+      const allPosts = []
+      for (const user of users) {
+        try {
+          const userPosts = await authClientInstance.getUserPosts(user.user_id)
+          // Add user info to each post
+          const postsWithUser = userPosts.map(post => ({
+            ...post,
+            user: user
+          }))
+          allPosts.push(...postsWithUser)
+        } catch (error) {
+          console.error(`Error fetching posts for user ${user.user_id}:`, error)
         }
-
-        // Sort posts by post_id (most recent first)
-        allPosts.sort((a, b) => b.post_id - a.post_id)
-        setPosts(allPosts)
-      } catch (error) {
-        console.error('Error fetching posts:', error)
-      } finally {
-        setLoading(false)
       }
+
+      // Sort posts by post_id (most recent first)
+      allPosts.sort((a, b) => b.post_id - a.post_id)
+      setPosts(allPosts)
+    } catch (error) {
+      console.error('Error fetching posts:', error)
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  const handleTouchStart = (e) => {
+    // Only enable pull to refresh when at the top of the page
+    if (window.scrollY === 0) {
+      setPullStartY(e.touches[0].clientY);
+      setIsPulling(true);
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isPulling) return;
+
+    const y = e.touches[0].clientY;
+    setPullMoveY(y);
+    
+    const pullDistance = y - pullStartY;
+    if (pullDistance > 0) {
+      setPullProgress(Math.min(pullDistance / pullThreshold, 1));
+      e.preventDefault();
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isPulling) return;
+
+    const pullDistance = pullMoveY - pullStartY;
+    if (pullDistance > pullThreshold && !refreshing) {
+      setRefreshing(true);
+      fetchPosts();
     }
 
+    setPullProgress(0);
+    setIsPulling(false);
+  };
+
+  useEffect(() => {
+    document.addEventListener('touchstart', handleTouchStart, { passive: false });
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isPulling, pullStartY, refreshing]);
+
+  useEffect(() => {
     fetchPosts()
   }, [])
 
@@ -366,313 +421,370 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">Loading posts...</div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-[975px] mx-auto px-0 md:px-8 relative">
+          {/* Refresh Spinner for initial load */}
+          <div className="absolute left-0 right-0 -top-16 flex justify-center items-center h-16 translate-y-full opacity-100">
+            <div className="rounded-full h-8 w-8 border-2 border-wearvana-accent border-t-transparent animate-[spin_1.5s_linear_infinite]" />
+          </div>
+
+          <div className="flex flex-col lg:flex-row gap-8">
+            <div className="flex-grow max-w-[630px]">
+              <div className="max-w-[470px] mx-auto md:mx-0">
+                {[...Array(3)].map((_, index) => (
+                  <div key={index} className="bg-white rounded-xl shadow-sm mb-6 overflow-hidden">
+                    <div className="flex items-center gap-3 p-4">
+                      <Skeleton className="w-8 h-8 rounded-full" />
+                      <Skeleton className="w-24 h-4" />
+                    </div>
+                    <Skeleton className="w-full aspect-square" />
+                    <div className="p-4">
+                      <div className="flex items-center gap-4 mb-2">
+                        <Skeleton className="w-6 h-6" />
+                        <Skeleton className="w-6 h-6" />
+                      </div>
+                      <Skeleton className="w-3/4 h-4 mb-2" />
+                      <div className="space-y-1">
+                        <Skeleton className="w-1/2 h-3" />
+                        <Skeleton className="w-2/3 h-3" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="hidden lg:block w-[319px] flex-none" />
+          </div>
+        </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-[975px] mx-auto px-0 md:px-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Main Feed */}
-          <div className="flex-grow max-w-[630px]">
-            <div className="max-w-[470px] mx-auto md:mx-0">
-              {posts.map((post) => (
-                <div key={post.post_id} className="bg-white rounded-xl shadow-sm mb-6 overflow-hidden">
-                  {/* Post Header */}
-                  <div className="flex items-center gap-3 p-4">
-                    <img
-                      src={post.user.profile_picture_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user.user_alias}`}
-                      alt={post.user.user_alias}
-                      className="w-8 h-8 rounded-full"
-                    />
-                    <span className="font-medium">{post.user.user_alias}</span>
-                  </div>
-
-                  {/* Post Image with Tags */}
-                  <div className="relative">
-                    <img
-                      src={post.image_url}
-                      alt={post.title}
-                      className="w-full aspect-square object-cover"
-                    />
-                    {/* Tag Dots */}
-                    {post.tags.map((tag, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleTagClick(tag)}
-                        className="absolute w-4 h-4 -ml-2 -mt-2 bg-white/50 hover:bg-white rounded-full border border-white/50 hover:border-white transition-colors cursor-pointer"
-                        style={{
-                          left: `${tag.x_coord}%`,
-                          top: `${tag.y_coord}%`,
-                        }}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Post Actions */}
-                  <div className="p-4">
-                    <div className="flex items-center gap-4 mb-2">
-                      <div className="relative">
-                        <button 
-                          onClick={() => handleLike(post.post_id)}
-                          className={`transform transition-all duration-200 hover:scale-125 ${
-                            likedPosts.has(post.post_id) 
-                              ? 'text-red-500 scale-110' 
-                              : 'hover:text-red-500'
-                          }`}
-                        >
-                          <Heart 
-                            className={`h-6 w-6 transform transition-all duration-200 ${
-                              likedPosts.has(post.post_id) ? 'fill-current' : ''
-                            }`}
-                          />
-                        </button>
-                        <LikeConfetti active={confettiPosts.has(post.post_id)} />
-                      </div>
-                      <div className="relative">
-                        <button 
-                          onClick={() => handleShare(post.post_id)}
-                          className="hover:text-blue-500 transition-colors"
-                        >
-                          <Share2 className="h-6 w-6" />
-                        </button>
-                        {showShareMenu === post.post_id && (
-                          <div 
-                            ref={shareMenuRef}
-                            className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg py-2 min-w-[200px] z-50"
-                          >
-                            <button
-                              onClick={() => handleCopyLink(post)}
-                              className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors"
-                            >
-                              {copiedPostId === post.post_id ? (
-                                <>
-                                  <Check className="h-4 w-4 text-green-500" />
-                                  <span className="text-green-500">Copied!</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="h-4 w-4" />
-                                  <span>Copy link</span>
-                                </>
-                              )}
-                            </button>
-                            <button
-                              onClick={() => handleWhatsAppShare(post)}
-                              className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors"
-                            >
-                              <MessageCircle className="h-4 w-4" />
-                              <span>Share on WhatsApp</span>
-                            </button>
-                            <button
-                              onClick={() => handleEmailShare(post)}
-                              className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors"
-                            >
-                              <Mail className="h-4 w-4" />
-                              <span>Share via Email</span>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <h2 className="font-medium mb-2">{post.title}</h2>
-                    {/* Tags Summary */}
-                    <div className="space-y-1">
-                      {post.tags.map((tag, index) => (
-                        <div key={index} className="text-sm">
-                          <span className="font-medium">{tag.clothing_name}</span>
-                          <span className="text-gray-500"> · </span>
-                          <span className="text-wearvana-accent">{tag.current_price}€</span>
-                          <span className="text-gray-500"> · </span>
-                          <span className="text-gray-500">{tag.brand}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Empty sidebar placeholder for layout balance */}
-          <div className="hidden lg:block w-[319px] flex-none" />
-        </div>
-      </div>
-
-      {/* Upload Button */}
-      <button 
-        onClick={() => setShowUploadModal(true)}
-        className="fixed md:hidden bottom-20 right-4 wearvana-button p-3 rounded-full shadow-lg z-40"
-        aria-label="Upload new post"
-      >
-        <Upload className="h-5 w-5" />
-      </button>
-
-      {/* Upload Modal */}
-      <UploadModal isOpen={showUploadModal} onClose={() => setShowUploadModal(false)} />
-
-      {/* Tag Modal */}
-      {showTagModal && currentTag !== null && (
+      <div className="max-w-[975px] mx-auto px-0 md:px-8 relative">
+        {/* Refresh Spinner */}
         <div 
-          className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setCurrentTag(null);
-            }
+          className={`absolute left-0 right-0 -top-16 flex justify-center items-center h-16 transition-all duration-200 ${
+            (pullProgress > 0 || refreshing) ? 'translate-y-full opacity-100' : 'translate-y-0 opacity-0'
+          }`}
+        >
+          <div 
+            className={`rounded-full h-8 w-8 border-2 border-wearvana-accent border-t-transparent ${
+              refreshing ? 'animate-[spin_1.5s_linear_infinite]' : 'transition-transform duration-200'
+            }`}
+            style={{
+              transform: refreshing ? 'none' : `rotate(${pullProgress * 360}deg)`
+            }}
+          />
+        </div>
+
+        {/* Main Content - Add sliding animation */}
+        <div 
+          className="transition-transform duration-200"
+          style={{
+            transform: pullProgress > 0 ? `translateY(${Math.min(pullProgress * 64, 64)}px)` : 'translateY(0)'
           }}
         >
-          <div className="bg-white w-full max-w-sm rounded-xl p-6">
-            <h3 className="text-lg font-semibold mb-4">
-              {typeof currentTag === 'number' ? 'Editar producto' : 'Detalles del producto'}
-            </h3>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-                handleAddTag({
-                  name: formData.get('name'),
-                  price: formData.get('price'),
-                  link: formData.get('link'),
-                });
-              }}
-              className="space-y-4"
-            >
-              <div>
-                <label className="block text-sm font-medium mb-1">Nombre del producto</label>
-                <input
-                  type="text"
-                  name="name"
-                  className="wearvana-input"
-                  required
-                  defaultValue={currentTag !== null && typeof currentTag === 'number' ? productTags[currentTag].name : ''}
-                />
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Main Feed */}
+            <div className="flex-grow max-w-[630px]">
+              <div className="max-w-[470px] mx-auto md:mx-0">
+                {posts.map((post) => (
+                  <div key={post.post_id} className="bg-white rounded-xl shadow-sm mb-6 overflow-hidden">
+                    {/* Post Header */}
+                    <div className="flex items-center gap-3 p-4">
+                      <img
+                        src={post.user.profile_picture_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user.user_alias}`}
+                        alt={post.user.user_alias}
+                        className="w-8 h-8 rounded-full"
+                      />
+                      <span className="font-medium">{post.user.user_alias}</span>
+                    </div>
+
+                    {/* Post Image with Tags */}
+                    <div className="relative">
+                      <img
+                        src={post.image_url}
+                        alt={post.title}
+                        className="w-full aspect-square object-cover"
+                      />
+                      {/* Tag Dots */}
+                      {post.tags.map((tag, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleTagClick(tag)}
+                          className="absolute w-4 h-4 -ml-2 -mt-2 bg-white/50 hover:bg-white rounded-full border border-white/50 hover:border-white transition-colors cursor-pointer"
+                          style={{
+                            left: `${tag.x_coord}%`,
+                            top: `${tag.y_coord}%`,
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Post Actions */}
+                    <div className="p-4">
+                      <div className="flex items-center gap-4 mb-2">
+                        <div className="relative">
+                          <button 
+                            onClick={() => handleLike(post.post_id)}
+                            className={`transform transition-all duration-200 hover:scale-125 ${
+                              likedPosts.has(post.post_id) 
+                                ? 'text-red-500 scale-110' 
+                                : 'hover:text-red-500'
+                            }`}
+                          >
+                            <Heart 
+                              className={`h-6 w-6 transform transition-all duration-200 ${
+                                likedPosts.has(post.post_id) ? 'fill-current' : ''
+                              }`}
+                            />
+                          </button>
+                          <LikeConfetti active={confettiPosts.has(post.post_id)} />
+                        </div>
+                        <div className="relative">
+                          <button 
+                            onClick={() => handleShare(post.post_id)}
+                            className="hover:text-blue-500 transition-colors"
+                          >
+                            <Share2 className="h-6 w-6" />
+                          </button>
+                          {showShareMenu === post.post_id && (
+                            <div 
+                              ref={shareMenuRef}
+                              className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg py-2 min-w-[200px] z-50"
+                            >
+                              <button
+                                onClick={() => handleCopyLink(post)}
+                                className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors"
+                              >
+                                {copiedPostId === post.post_id ? (
+                                  <>
+                                    <Check className="h-4 w-4 text-green-500" />
+                                    <span className="text-green-500">Copied!</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="h-4 w-4" />
+                                    <span>Copy link</span>
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                onClick={() => handleWhatsAppShare(post)}
+                                className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors"
+                              >
+                                <MessageCircle className="h-4 w-4" />
+                                <span>Share on WhatsApp</span>
+                              </button>
+                              <button
+                                onClick={() => handleEmailShare(post)}
+                                className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors"
+                              >
+                                <Mail className="h-4 w-4" />
+                                <span>Share via Email</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <h2 className="font-medium mb-2">{post.title}</h2>
+                      {/* Tags Summary */}
+                      <div className="space-y-1">
+                        {post.tags.map((tag, index) => (
+                          <div key={index} className="text-sm">
+                            <span className="font-medium">{tag.clothing_name}</span>
+                            <span className="text-gray-500"> · </span>
+                            <span className="text-wearvana-accent">{tag.current_price}€</span>
+                            <span className="text-gray-500"> · </span>
+                            <span className="text-gray-500">{tag.brand}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Precio (€)</label>
-                <input
-                  type="number"
-                  name="price"
-                  step="0.01"
-                  className="wearvana-input"
-                  required
-                  defaultValue={currentTag !== null && typeof currentTag === 'number' ? productTags[currentTag].price : ''}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Enlace del producto</label>
-                <input
-                  type="url"
-                  name="link"
-                  className="wearvana-input"
-                  required
-                  defaultValue={currentTag !== null && typeof currentTag === 'number' ? productTags[currentTag].link : ''}
-                />
-              </div>
-              <div className="flex gap-2 pt-2">
-                {typeof currentTag === 'number' && (
+            </div>
+
+            {/* Empty sidebar placeholder for layout balance */}
+            <div className="hidden lg:block w-[319px] flex-none" />
+          </div>
+        </div>
+
+        {/* Upload Button */}
+        <button 
+          onClick={() => setShowUploadModal(true)}
+          className="fixed md:hidden bottom-20 right-4 wearvana-button p-3 rounded-full shadow-lg z-40"
+          aria-label="Upload new post"
+        >
+          <Upload className="h-5 w-5" />
+        </button>
+
+        {/* Upload Modal */}
+        <UploadModal isOpen={showUploadModal} onClose={() => setShowUploadModal(false)} />
+
+        {/* Tag Modal */}
+        {showTagModal && currentTag !== null && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setCurrentTag(null);
+              }
+            }}
+          >
+            <div className="bg-white w-full max-w-sm rounded-xl p-6">
+              <h3 className="text-lg font-semibold mb-4">
+                {typeof currentTag === 'number' ? 'Editar producto' : 'Detalles del producto'}
+              </h3>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.target);
+                  handleAddTag({
+                    name: formData.get('name'),
+                    price: formData.get('price'),
+                    link: formData.get('link'),
+                  });
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium mb-1">Nombre del producto</label>
+                  <input
+                    type="text"
+                    name="name"
+                    className="wearvana-input"
+                    required
+                    defaultValue={currentTag !== null && typeof currentTag === 'number' ? productTags[currentTag].name : ''}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Precio (€)</label>
+                  <input
+                    type="number"
+                    name="price"
+                    step="0.01"
+                    className="wearvana-input"
+                    required
+                    defaultValue={currentTag !== null && typeof currentTag === 'number' ? productTags[currentTag].price : ''}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Enlace del producto</label>
+                  <input
+                    type="url"
+                    name="link"
+                    className="wearvana-input"
+                    required
+                    defaultValue={currentTag !== null && typeof currentTag === 'number' ? productTags[currentTag].link : ''}
+                  />
+                </div>
+                <div className="flex gap-2 pt-2">
+                  {typeof currentTag === 'number' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleRemoveTag(currentTag);
+                        setCurrentTag(null);
+                      }}
+                      className="flex-1 py-2 px-4 border border-red-200 text-red-600 rounded-lg hover:bg-red-50"
+                    >
+                      Eliminar
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={() => {
-                      handleRemoveTag(currentTag);
-                      setCurrentTag(null);
-                    }}
-                    className="flex-1 py-2 px-4 border border-red-200 text-red-600 rounded-lg hover:bg-red-50"
+                    onClick={() => setCurrentTag(null)}
+                    className="flex-1 py-2 px-4 border border-gray-200 rounded-lg hover:bg-gray-50"
                   >
-                    Eliminar
+                    Cancelar
                   </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setCurrentTag(null)}
-                  className="flex-1 py-2 px-4 border border-gray-200 rounded-lg hover:bg-gray-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 wearvana-button"
-                >
-                  Guardar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Camera View */}
-      {showCamera && (
-        <div className="fixed inset-0 bg-black z-50">
-          <div className="relative h-full">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-full object-cover"
-            />
-            {cameraError ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                <div className="text-white text-center px-4">
-                  <p className="mb-4">{cameraError}</p>
                   <button
-                    onClick={stopCamera}
-                    className="wearvana-button"
+                    type="submit"
+                    className="flex-1 wearvana-button"
                   >
-                    Cerrar
+                    Guardar
                   </button>
                 </div>
-              </div>
-            ) : (
-              <div className="absolute bottom-0 inset-x-0 p-4 flex justify-center">
-                <button
-                  onClick={capturePhoto}
-                  className="w-16 h-16 rounded-full border-4 border-white"
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Hidden canvas for photo capture */}
-      <canvas ref={canvasRef} className="hidden" />
-
-      {/* Tag Details Popup */}
-      {selectedTag && (
-        <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedTag(null)}
-        >
-          <div
-            className="bg-white rounded-xl p-6 max-w-sm w-full"
-            onClick={e => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-semibold mb-4">{selectedTag.clothing_name}</h3>
-            <div className="space-y-2">
-              <p>
-                <span className="font-medium">Price: </span>
-                <span className="text-wearvana-accent">{selectedTag.current_price}€</span>
-              </p>
-              <p>
-                <span className="font-medium">Brand: </span>
-                <span>{selectedTag.brand}</span>
-              </p>
-              <a
-                href={selectedTag.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block mt-4 wearvana-button text-center"
-              >
-                View Product
-              </a>
+              </form>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Camera View */}
+        {showCamera && (
+          <div className="fixed inset-0 bg-black z-50">
+            <div className="relative h-full">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover"
+              />
+              {cameraError ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                  <div className="text-white text-center px-4">
+                    <p className="mb-4">{cameraError}</p>
+                    <button
+                      onClick={stopCamera}
+                      className="wearvana-button"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="absolute bottom-0 inset-x-0 p-4 flex justify-center">
+                  <button
+                    onClick={capturePhoto}
+                    className="w-16 h-16 rounded-full border-4 border-white"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Hidden canvas for photo capture */}
+        <canvas ref={canvasRef} className="hidden" />
+
+        {/* Tag Details Popup */}
+        {selectedTag && (
+          <div
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedTag(null)}
+          >
+            <div
+              className="bg-white rounded-xl p-6 max-w-sm w-full"
+              onClick={e => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-semibold mb-4">{selectedTag.clothing_name}</h3>
+              <div className="space-y-2">
+                <p>
+                  <span className="font-medium">Price: </span>
+                  <span className="text-wearvana-accent">{selectedTag.current_price}€</span>
+                </p>
+                <p>
+                  <span className="font-medium">Brand: </span>
+                  <span>{selectedTag.brand}</span>
+                </p>
+                <a
+                  href={selectedTag.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block mt-4 wearvana-button text-center"
+                >
+                  View Product
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

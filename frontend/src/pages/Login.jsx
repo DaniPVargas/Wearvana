@@ -43,7 +43,8 @@ export default function LoginPage() {
   return (
     <div className="max-w-md px-5 mx-auto flex items-center justify-center min-h-screen bg-ig-primary">
       <section className="w-full p-6 bg-white rounded-lg shadow-lg">
-        <img src="/logo.svg" alt="Logo" className="mx-auto mb-16 w-48 h-48 " />
+        <img src="/logo.svg" alt="Logo" className="mx-auto mb-4 w-48 h-48" />
+        <p className="text-center text-lg text-gray-500 mb-12">Fashion Social Network</p>
         <button
           onClick={handleSubmit}
           className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
