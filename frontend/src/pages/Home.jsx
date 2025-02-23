@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useContext } from "react"
 import { Upload, Camera, Image, X, Plus, Link as LinkIcon, Settings, Heart, Share2, Copy, Mail, MessageCircle, Check } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 import Post from "../components/Post"
 import UploadModal from "../components/UploadModal"
 import AuthClient from "../services/AuthClient"
@@ -91,6 +92,7 @@ export default function Home() {
   const [showShareMenu, setShowShareMenu] = useState(null)
   const [copiedPostId, setCopiedPostId] = useState(null)
   const shareMenuRef = useRef(null)
+  const navigate = useNavigate();
 
   const loadMorePosts = () => {
     if (loading) return;
@@ -420,15 +422,14 @@ export default function Home() {
     setShowShareMenu(null);
   };
 
+  const handleProfileClick = (userId) => {
+    navigate(`/user/${userId}`);
+  };
+
   if (initialLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-[975px] mx-auto px-0 md:px-8 relative">
-          {/* Refresh Spinner for initial load */}
-          <div className="absolute left-0 right-0 -top-16 flex justify-center items-center h-16 translate-y-full opacity-100">
-            <div className="rounded-full h-8 w-8 border-2 border-wearvana-accent border-t-transparent animate-[spin_1.5s_linear_infinite]" />
-          </div>
-
           <div className="flex flex-col lg:flex-row gap-8">
             <div className="flex-grow max-w-[630px]">
               <div className="max-w-[470px] mx-auto md:mx-0">
@@ -464,21 +465,23 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-[975px] mx-auto px-0 md:px-8 relative">
-        {/* Refresh Spinner */}
-        <div 
-          className={`absolute left-0 right-0 -top-16 flex justify-center items-center h-16 transition-all duration-200 ${
-            (pullProgress > 0 || refreshing) ? 'translate-y-full opacity-100' : 'translate-y-0 opacity-0'
-          }`}
-        >
+        {/* Refresh Spinner - Only show during pull-to-refresh */}
+        {(pullProgress > 0 || refreshing) && (
           <div 
-            className={`rounded-full h-8 w-8 border-2 border-wearvana-accent border-t-transparent ${
-              refreshing ? 'animate-[spin_1.5s_linear_infinite]' : 'transition-transform duration-200'
+            className={`absolute left-0 right-0 -top-16 flex justify-center items-center h-16 transition-all duration-200 ${
+              (pullProgress > 0 || refreshing) ? 'translate-y-full opacity-100' : 'translate-y-0 opacity-0'
             }`}
-            style={{
-              transform: refreshing ? 'none' : `rotate(${pullProgress * 360}deg)`
-            }}
-          />
-        </div>
+          >
+            <div 
+              className={`rounded-full h-8 w-8 border-2 border-wearvana-accent border-t-transparent ${
+                refreshing ? 'animate-[spin_1.5s_linear_infinite]' : 'transition-transform duration-200'
+              }`}
+              style={{
+                transform: refreshing ? 'none' : `rotate(${pullProgress * 360}deg)`
+              }}
+            />
+          </div>
+        )}
 
         {/* Main Content - Add sliding animation */}
         <div 
@@ -495,32 +498,44 @@ export default function Home() {
                   <div key={post.post_id} className="bg-white rounded-xl shadow-sm mb-6 overflow-hidden">
                     {/* Post Header */}
                     <div className="flex items-center gap-3 p-4">
-                      <img
-                        src={post.user.profile_picture_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user.user_alias}`}
-                        alt={post.user.user_alias}
-                        className="w-8 h-8 rounded-full"
-                      />
-                      <span className="font-medium">{post.user.user_alias}</span>
+                      <button
+                        onClick={() => handleProfileClick(post.user.user_id)}
+                        className="hover:opacity-80 transition-opacity"
+                      >
+                        <img
+                          src={post.user.profile_picture_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user.user_alias}`}
+                          alt={post.user.user_alias}
+                          className="w-8 h-8 rounded-full"
+                        />
+                      </button>
+                      <button
+                        onClick={() => handleProfileClick(post.user.user_id)}
+                        className="font-medium hover:opacity-80 transition-opacity"
+                      >
+                        {post.user.user_alias}
+                      </button>
                     </div>
 
                     {/* Post Image with Tags */}
-                    <div className="relative">
+                    <div className="relative aspect-square">
                       <img
                         src={post.image_url}
                         alt={post.title}
-                        className="w-full aspect-square object-cover"
+                        className="absolute inset-0 w-full h-full object-cover"
                       />
                       {/* Tag Dots */}
                       {post.tags.map((tag, index) => (
                         <button
                           key={index}
                           onClick={() => handleTagClick(tag)}
-                          className="absolute w-4 h-4 -ml-2 -mt-2 bg-white/50 hover:bg-white rounded-full border border-white/50 hover:border-white transition-colors cursor-pointer"
+                          className="absolute w-6 h-6 -ml-3 -mt-3 bg-white/50 hover:bg-white rounded-full border border-white/50 hover:border-white transition-colors cursor-pointer flex items-center justify-center"
                           style={{
                             left: `${tag.x_coord}%`,
                             top: `${tag.y_coord}%`,
                           }}
-                        />
+                        >
+                          <div className="w-2 h-2 bg-white rounded-full" />
+                        </button>
                       ))}
                     </div>
 
