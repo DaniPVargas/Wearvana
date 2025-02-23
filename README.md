@@ -7,30 +7,43 @@
 [![Contributor Covenant](https://img.shields.io/badge/Citizen%20Code%20of%20Conduct-2.3-pink.svg)](CODE_OF_CONDUCT.md)
 
 ##  What is Wearvana?
-Wearvana, as our logo says, is **_the fashion social network_**. Using Inditex's recently released APIs, Wearvana aims to be the social network of reference for fashion. Like any social network, you can connect with friends and others, share your photos and impress everyone with your outfits. With the clothing tagging functionality, you can check where to buy your favorite influencer's favorite jacket, or share where you buy your best shirt. On the other hand, Wearvana's assistant will help you get inspired and buy the perfect outfit for that special night. You can give it a simple text describing what you want, or upload an image to use as a reference - all without closing the app!
+Wearvana is **the fashion social network**. Using Inditex Tech's APIs, Wearvana aims to be the social network of reference for fashion. Like any social network, you can connect with friends and others, share your photos and impress everyone with your outfits. With the clothing tagging feature, you can check where to buy your favorite influencer's jacket, or share where you buy your best shirt. On the other hand, Wearvana's assistant will help you get inspired and buy the perfect outfit for that special night. You can give it a simple text describing what you want, or upload an image to use as a reference - all without closing the app!
 
-## Running Wearvana locally
-### Wearvana backend
-The first thing you need to use Wearvana locally is to prepare and run the backedn, which will be the responsible of responding all your requests. To have a fast an easy way of prepare and install all of the necessary dependencies, we have chosen to use `uv`. `uv` is an extremely fast Python package installer and resolver, written in Rust, and designed as a drop-in replacement for pip and pip-tools workflows. To use it you only need to install `uv` [(How to install uv ?)](https://docs.astral.sh/uv/getting-started/installation/), change to `backend` directory and run the following command from the terminal:
+## Running Wearvana
+### Backend
+In order to run the backend, we strongly recommend using `uv`. `uv` is an extremely fast Python package installer and resolver, written in Rust, and designed as a drop-in replacement for pip and pip-tools workflows. To use it you only need to [install `uv`](https://docs.astral.sh/uv/getting-started/installation/). In order to install the project's dependencies, run the following command inside the `backend` directory:
 ```bash
   uv sync
 ```
-After that, all the necessary dependencies will be installed (extremely fast, as we said before), and finally you only need to run:
+To run the backend, run `uvicorn` using the following command:
 ```bash
 uv run uvicorn --host 0.0.0.0 --port 8000 main:app
 ```
-This will make the backend available in your computer in the `http://0.0.0.0:8000/` url. If you need help with the API methods, `http://0.0.0.0:8000/docs` will show you all the necessary documentation, including the posibility of running commands.
+This will serve the backend on port `8000`. If you want a list of API methods, check out the `/docs` endpoint (`http://127.0.0.1:8000/docs` if you are running the backend locally).
 
-However, if you are not ready to embrace the future just yet, we have also think in you. Inside the `backend` folder, we have left a `requirements.txt` file to install with classic command
+If you are no ready to embrace the future just yet, you can install the necessary dependencies using just `pip`. We recommend creating a virtual environment and installing the project's dependencies inside using:
 ```bash
 pip install -r requirements.txt
 ```
-Finally, the command to run the backend will be:
+Finally, the command to run the backend is:
 ```bash
 uvicorn --host 0.0.0.0 --port 8000 main:app
 ```
 
-### Wearvana frontend
+Lastly, we also provide a `Dockerfile` to enable running the backend inside a container.
+
+#### Environment Variables
+In order to run the backend successfully you will need to provide the following environment variables:
+- `DB_FILE`: path for the SQLite database file.
+- `PICTURES_DIR`: path for the pictures to be saved.
+- `INDITEX_TOKEN_URL`: url to obtain the token from the Inditex Developer API.
+- `INDITEX_CLIENT_ID`: id to obtain the token from the Inditex Developer API.
+- `INDITEX_CLIENT_PASSWORD`: password to obtain the token from the Inditex Developer API.
+- `INDITEX_IMAGE_SEARCH_URL`: endpoint for the image search in the Inditex Developer API.
+- `INDITEX_TEXT_SEARCH_URL`: endpoint for the text search in the Inditex Developer API.
+- `PASSWORDLESS_DEV_SECRET`: private key for the paswordless.dev application.
+
+### Frontend
 To run the Wearvana frontend locally, you'll need Node.js installed on your system. The frontend is built using modern web technologies including React, Vite, and Tailwind CSS for a fast and responsive user experience.
 
 First, navigate to the frontend directory:
