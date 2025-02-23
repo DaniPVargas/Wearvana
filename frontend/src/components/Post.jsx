@@ -59,11 +59,13 @@ export default function Post({ username, userImage, images, likes, caption }) {
     <div className="pb-8 mb-4">
       <div className="flex items-center gap-3 px-4 py-3">
         <Link to={`/user/${username}`} className="flex items-center gap-3 hover:opacity-80">
-          <img 
-            src={userImage} 
-            alt={username}
-            className="w-7 h-7 rounded-full object-cover"
-          />
+          <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+            <img
+              src={userImage}
+              alt={username}
+              className="w-full h-full object-cover"
+            />
+          </div>
           <span className="text-sm font-medium">{username}</span>
         </Link>
         <button className="ml-auto">

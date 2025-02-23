@@ -93,8 +93,36 @@ export default function Profile() {
       return;
     }
 
-    setNewProfileImage(file);
-    setNewProfileImagePreview(URL.createObjectURL(file));
+    // Create a temporary image to get dimensions
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const size = Math.min(img.width, img.height);
+      canvas.width = size;
+      canvas.height = size;
+      
+      const ctx = canvas.getContext('2d');
+      // Calculate position to crop from center
+      const startX = (img.width - size) / 2;
+      const startY = (img.height - size) / 2;
+      
+      ctx.drawImage(
+        img,
+        startX, startY, size, size,  // Source rectangle
+        0, 0, size, size             // Destination rectangle
+      );
+
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          console.error('Failed to process image');
+          return;
+        }
+        const squareFile = new File([blob], file.name, { type: 'image/jpeg' });
+        setNewProfileImage(squareFile);
+        setNewProfileImagePreview(URL.createObjectURL(blob));
+      }, 'image/jpeg', 0.8);
+    };
+    img.src = URL.createObjectURL(file);
   };
 
   const handleSaveProfile = async () => {
@@ -140,9 +168,9 @@ export default function Profile() {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'environment',
-          width: { ideal: 720 },
-          height: { ideal: 1280 },
-          aspectRatio: { ideal: 9/16 }
+          width: { ideal: 1080 },
+          height: { ideal: 1080 },
+          aspectRatio: { ideal: 1 }
         },
         audio: false
       });
@@ -182,11 +210,22 @@ export default function Profile() {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      // Calculate the square dimensions
+      const size = Math.min(video.videoWidth, video.videoHeight);
+      const startX = (video.videoWidth - size) / 2;
+      const startY = (video.videoHeight - size) / 2;
+      
+      // Set canvas to be square
+      canvas.width = size;
+      canvas.height = size;
 
       const context = canvas.getContext("2d");
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      // Draw the center square portion of the video
+      context.drawImage(
+        video,
+        startX, startY, size, size,  // Source rectangle
+        0, 0, size, size             // Destination rectangle
+      );
 
       canvas.toBlob(async (blob) => {
         if (!blob) {
@@ -278,7 +317,7 @@ export default function Profile() {
               <img
                 src={user.profile_picture_url}
                 alt={user.user_alias}
-                className="w-20 h-20 md:w-32 md:h-32 rounded-full border-2 border-gray-200"
+                className="w-20 h-20 md:w-32 md:h-32 rounded-full border-2 border-gray-200 object-cover"
               />
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold">{user.user_alias}</h1>

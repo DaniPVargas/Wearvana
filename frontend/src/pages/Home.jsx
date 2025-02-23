@@ -612,14 +612,16 @@ export default function Home() {
                         onClick={() => handleProfileClick(post.user.user_id)}
                         className="hover:opacity-80 transition-opacity"
                       >
-                        <img
-                          src={
-                            post.user.profile_picture_url ||
-                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user.user_alias}`
-                          }
-                          alt={post.user.user_alias}
-                          className="w-8 h-8 rounded-full"
-                        />
+                        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                          <img
+                            src={
+                              post.user.profile_picture_url ||
+                              `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user.user_alias}`
+                            }
+                            alt={post.user.user_alias}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
                       </button>
                       <button
                         onClick={() => handleProfileClick(post.user.user_id)}
