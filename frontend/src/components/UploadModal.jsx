@@ -1,6 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { Camera, Image, X, Plus, Link as LinkIcon, Send } from "lucide-react";
-import AuthClient from "../services/AuthClient";
+import { useState, useRef, useEffect } from 'react';
+import { Camera, Image, X, Plus, Link as LinkIcon, Send } from 'lucide-react';
 
 export default function UploadModal({ isOpen, onClose }) {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -11,8 +10,8 @@ export default function UploadModal({ isOpen, onClose }) {
   const [productTags, setProductTags] = useState([]);
   const [tagPosition, setTagPosition] = useState({ x: 0, y: 0 });
   const [currentTag, setCurrentTag] = useState(null);
-  const [title, setTitle] = useState("");
-
+  const [title, setTitle] = useState('');
+  
   const fileInputRef = useRef(null);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
@@ -20,17 +19,17 @@ export default function UploadModal({ isOpen, onClose }) {
   const imageRef = useRef(null);
 
   const [isCapturingProduct, setIsCapturingProduct] = useState(false);
-  const [productUrl, setProductUrl] = useState("");
+  const [productUrl, setProductUrl] = useState('');
 
   // Add scroll lock effect
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     }
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     };
   }, [isOpen]);
 
@@ -43,13 +42,13 @@ export default function UploadModal({ isOpen, onClose }) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      alert("Por favor, selecciona una imagen.");
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecciona una imagen.');
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("La imagen no puede superar los 5MB.");
+      alert('La imagen no puede superar los 5MB.');
       return;
     }
 
@@ -61,45 +60,40 @@ export default function UploadModal({ isOpen, onClose }) {
   const startCamera = async () => {
     try {
       setShowCamera(true);
-
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: "environment",
+          facingMode: 'environment',
           width: { ideal: 720 },
           height: { ideal: 1280 },
-          aspectRatio: { ideal: 9 / 16 },
+          aspectRatio: { ideal: 9/16 }
         },
-        audio: false,
+        audio: false
       });
-
+      
       if (!videoRef.current) {
-        throw new Error("Video element not found");
+        throw new Error('Video element not found');
       }
 
       videoRef.current.srcObject = stream;
       streamRef.current = stream;
-
-      videoRef.current.addEventListener("canplay", function handleCanPlay() {
-        videoRef.current.removeEventListener("canplay", handleCanPlay);
-        videoRef.current
-          .play()
+      
+      videoRef.current.addEventListener('canplay', function handleCanPlay() {
+        videoRef.current.removeEventListener('canplay', handleCanPlay);
+        videoRef.current.play()
           .then(() => {
             setCameraError(null);
           })
-          .catch((err) => {
-            console.error("Error playing video:", err);
-            setCameraError(
-              "Error al iniciar la cámara. Por favor, recarga la página."
-            );
+          .catch(err => {
+            console.error('Error playing video:', err);
+            setCameraError('Error al iniciar la cámara. Por favor, recarga la página.');
           });
       });
     } catch (err) {
-      console.error("Error accessing camera:", err);
-      setCameraError(
-        "No se pudo acceder a la cámara. Por favor, permite el acceso."
-      );
+      console.error('Error accessing camera:', err);
+      setCameraError('No se pudo acceder a la cámara. Por favor, permite el acceso.');
       setShowCamera(false);
     }
   };
@@ -107,45 +101,39 @@ export default function UploadModal({ isOpen, onClose }) {
   const capturePhoto = () => {
     try {
       if (!videoRef.current || !canvasRef.current) {
-        console.error("Video or canvas element not found");
+        console.error('Video or canvas element not found');
         return;
       }
 
       const video = videoRef.current;
       const canvas = canvasRef.current;
-
+      
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
 
       const context = canvas.getContext("2d");
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      canvas.toBlob(
-        async (blob) => {
-          if (!blob) {
-            console.error("Failed to capture photo");
-            return;
-          }
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          console.error('Failed to capture photo');
+          return;
+        }
 
-          const file = new File([blob], "photo.jpg", { type: "image/jpeg" });
-          setSelectedImage(file);
-          setPreviewUrl(URL.createObjectURL(blob));
-          stopCamera();
-        },
-        "image/jpeg",
-        0.8
-      );
+        const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+        setSelectedImage(file);
+        setPreviewUrl(URL.createObjectURL(blob));
+        stopCamera();
+      }, 'image/jpeg', 0.8);
     } catch (error) {
-      console.error("Error capturing photo:", error);
-      setCameraError(
-        "Error al capturar la foto. Por favor, inténtalo de nuevo."
-      );
+      console.error('Error capturing photo:', error);
+      setCameraError('Error al capturar la foto. Por favor, inténtalo de nuevo.');
     }
   };
 
   const stopCamera = () => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
     if (videoRef.current) {
@@ -160,24 +148,24 @@ export default function UploadModal({ isOpen, onClose }) {
     const rect = imageRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
-
+    
     setTagPosition({ x, y });
-    setCurrentTag("new");
+    setCurrentTag('new');
   };
 
   const handleAddTag = (tag) => {
-    if (currentTag === "new") {
-      setProductTags((tags) => [...tags, { ...tag, position: tagPosition }]);
-    } else if (typeof currentTag === "number") {
-      setProductTags((tags) =>
-        tags.map((t, i) => (i === currentTag ? { ...t, ...tag } : t))
+    if (currentTag === 'new') {
+      setProductTags(tags => [...tags, { ...tag, position: tagPosition }]);
+    } else if (typeof currentTag === 'number') {
+      setProductTags(tags => 
+        tags.map((t, i) => i === currentTag ? { ...t, ...tag } : t)
       );
     }
     setCurrentTag(null);
   };
 
   const handleRemoveTag = (index) => {
-    setProductTags((tags) => tags.filter((_, i) => i !== index));
+    setProductTags(tags => tags.filter((_, i) => i !== index));
   };
 
   const handleEditTag = (index) => {
@@ -190,31 +178,15 @@ export default function UploadModal({ isOpen, onClose }) {
     setSelectedImage(null);
     setPreviewUrl(null);
     setProductTags([]);
-    setTitle("");
+    setTitle('');
     stopCamera();
     onClose();
-  };
-
-  const publicatePost = async ({ image, title, productTags }) => {
-    console.log("Publicating post...");
-    console.log("Image:", image);
-    console.log("Title:", title);
-    console.log("Product tags:", productTags);
-
-    const authClientInstance = new AuthClient();
-    const response = await authClientInstance.publicatePost(
-      image,
-      title,
-      productTags
-    );
-
-    handleClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div
+    <div 
       className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
@@ -226,7 +198,7 @@ export default function UploadModal({ isOpen, onClose }) {
         {/* Modal Header */}
         <div className="border-b border-gray-200 p-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Nova publicación</h2>
-          <button
+          <button 
             onClick={handleClose}
             className="text-gray-500 hover:text-gray-700"
           >
@@ -238,19 +210,19 @@ export default function UploadModal({ isOpen, onClose }) {
         <div className="p-4">
           {!selectedImage ? (
             <div className="space-y-4">
-              <button
+              <button 
                 onClick={startCamera}
                 className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
               >
                 <Camera className="h-5 w-5" />
-                <span>Facer foto</span>
+                <span>Hacer foto</span>
               </button>
-              <button
+              <button 
                 onClick={handleImageUpload}
                 className="wearvana-button w-full flex items-center justify-center gap-2 py-3 !bg-white !text-black border border-gray-200"
               >
                 <Image className="h-5 w-5" />
-                <span>Subir da galería</span>
+                <span>Subir de galería</span>
               </button>
               <input
                 type="file"
@@ -269,7 +241,7 @@ export default function UploadModal({ isOpen, onClose }) {
                   alt="Preview"
                   className="w-full aspect-square object-cover rounded-lg"
                   onClick={handleImageClick}
-                  style={{ cursor: showTagModal ? "crosshair" : "default" }}
+                  style={{ cursor: showTagModal ? 'crosshair' : 'default' }}
                 />
                 {/* Product Tags */}
                 {productTags.map((tag, index) => (
@@ -277,9 +249,9 @@ export default function UploadModal({ isOpen, onClose }) {
                     key={index}
                     onClick={() => handleEditTag(index)}
                     className="absolute w-6 h-6 -ml-3 -mt-3 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
-                    style={{
+                    style={{ 
                       left: `${tag.position.x}%`,
-                      top: `${tag.position.y}%`,
+                      top: `${tag.position.y}%`
                     }}
                   >
                     <Plus className="h-4 w-4" />
@@ -287,10 +259,7 @@ export default function UploadModal({ isOpen, onClose }) {
                 ))}
               </div>
               <div>
-                <label
-                  htmlFor="title"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
                   Título da publicación
                 </label>
                 <input
@@ -302,29 +271,27 @@ export default function UploadModal({ isOpen, onClose }) {
                   className="wearvana-input w-full"
                 />
               </div>
-              <button
-                className={`wearvana-button w-full flex items-center justify-center gap-2 py-3 ${
-                  showTagModal
-                    ? "!bg-wearvana-accent/10 !text-wearvana-accent"
-                    : ""
-                }`}
+              <button 
+                className={`wearvana-button w-full flex items-center justify-center gap-2 py-3 ${showTagModal ? '!bg-wearvana-accent/10 !text-wearvana-accent' : ''}`}
                 onClick={() => setShowTagModal(!showTagModal)}
               >
                 <LinkIcon className="h-5 w-5" />
                 <span>
-                  {showTagModal && !currentTag
-                    ? "Selecciona la prenda"
-                    : "Etiquetar productos"}
+                  {showTagModal && !currentTag ? 'Selecciona la prenda' : 'Etiquetar productos'}
                 </span>
               </button>
               {productTags.length > 0 && title.trim() && (
-                <button
+                <button 
                   className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
-                  onClick={publicatePost({
-                    image: selectedImage,
-                    title,
-                    productTags,
-                  })}
+                  onClick={() => {
+                    // TODO: Implement post creation
+                    console.log('Creating post with:', {
+                      image: selectedImage,
+                      title: title,
+                      tags: productTags
+                    });
+                    handleClose();
+                  }}
                 >
                   <Send className="h-5 w-5" />
                   <span>Publicar</span>
@@ -337,7 +304,7 @@ export default function UploadModal({ isOpen, onClose }) {
 
       {/* Tag Modal */}
       {showTagModal && currentTag !== null && (
-        <div
+        <div 
           className="fixed inset-0 bg-black/50 z-[80] flex items-center justify-center p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
@@ -347,73 +314,53 @@ export default function UploadModal({ isOpen, onClose }) {
         >
           <div className="bg-white w-full max-w-sm rounded-xl p-6">
             <h3 className="text-lg font-semibold mb-4">
-              {typeof currentTag === "number"
-                ? "Editar producto"
-                : "Detalles del producto"}
+              {typeof currentTag === 'number' ? 'Editar producto' : 'Detalles del producto'}
             </h3>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 handleAddTag({
-                  name: formData.get("name"),
-                  price: formData.get("price"),
-                  link: formData.get("link"),
+                  name: formData.get('name'),
+                  price: formData.get('price'),
+                  link: formData.get('link'),
                 });
               }}
               className="space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Nombre del producto
-                </label>
+                <label className="block text-sm font-medium mb-1">Nombre del producto</label>
                 <input
                   type="text"
                   name="name"
                   className="wearvana-input"
                   required
-                  defaultValue={
-                    currentTag !== null && typeof currentTag === "number"
-                      ? productTags[currentTag].name
-                      : ""
-                  }
+                  defaultValue={currentTag !== null && typeof currentTag === 'number' ? productTags[currentTag].name : ''}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Precio (€)
-                </label>
+                <label className="block text-sm font-medium mb-1">Precio (€)</label>
                 <input
                   type="number"
                   name="price"
                   step="0.01"
                   className="wearvana-input"
                   required
-                  defaultValue={
-                    currentTag !== null && typeof currentTag === "number"
-                      ? productTags[currentTag].price
-                      : ""
-                  }
+                  defaultValue={currentTag !== null && typeof currentTag === 'number' ? productTags[currentTag].price : ''}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Enlace del producto
-                </label>
+                <label className="block text-sm font-medium mb-1">Enlace del producto</label>
                 <input
                   type="url"
                   name="link"
                   className="wearvana-input"
                   required
-                  defaultValue={
-                    currentTag !== null && typeof currentTag === "number"
-                      ? productTags[currentTag].link
-                      : ""
-                  }
+                  defaultValue={currentTag !== null && typeof currentTag === 'number' ? productTags[currentTag].link : ''}
                 />
               </div>
               <div className="flex gap-2 pt-2">
-                {typeof currentTag === "number" && (
+                {typeof currentTag === 'number' && (
                   <button
                     type="button"
                     onClick={() => {
@@ -432,7 +379,10 @@ export default function UploadModal({ isOpen, onClose }) {
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="flex-1 wearvana-button">
+                <button
+                  type="submit"
+                  className="flex-1 wearvana-button"
+                >
                   Guardar
                 </button>
               </div>
@@ -456,7 +406,10 @@ export default function UploadModal({ isOpen, onClose }) {
               <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                 <div className="text-white text-center px-4">
                   <p className="mb-4">{cameraError}</p>
-                  <button onClick={stopCamera} className="wearvana-button">
+                  <button
+                    onClick={stopCamera}
+                    className="wearvana-button"
+                  >
                     Cerrar
                   </button>
                 </div>
@@ -477,4 +430,4 @@ export default function UploadModal({ isOpen, onClose }) {
       <canvas ref={canvasRef} className="hidden" />
     </div>
   );
-}
+} 
