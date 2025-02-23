@@ -7,6 +7,7 @@ export default function PostsGridFeed({ posts, user, onBackClick }) {
   const [confettiPosts, setConfettiPosts] = useState(new Set());
   const [showShareMenu, setShowShareMenu] = useState(null);
   const [copiedPostId, setCopiedPostId] = useState(null);
+  const [selectedTag, setSelectedTag] = useState(null);
   const shareMenuRef = useRef(null);
   const selectedPostRef = useRef(null);
 
@@ -15,6 +16,11 @@ export default function PostsGridFeed({ posts, user, onBackClick }) {
     setTimeout(() => {
       selectedPostRef.current?.scrollIntoView({ behavior: 'instant', block: 'start' });
     }, 0);
+  };
+
+  const handleTagClick = (e, tag) => {
+    e.stopPropagation();
+    setSelectedTag(tag);
   };
 
   const handleLike = (postId) => {
@@ -123,6 +129,7 @@ export default function PostsGridFeed({ posts, user, onBackClick }) {
                   {post.tags.map((tag, index) => (
                     <button
                       key={index}
+                      onClick={(e) => handleTagClick(e, tag)}
                       className="absolute w-6 h-6 -ml-3 -mt-3 bg-white/50 hover:bg-white rounded-full border border-white/50 hover:border-white transition-colors cursor-pointer flex items-center justify-center"
                       style={{
                         left: `${tag.x_coord}%`,
@@ -253,6 +260,39 @@ export default function PostsGridFeed({ posts, user, onBackClick }) {
           ))
         )}
       </div>
+
+      {/* Tag Details Modal */}
+      {selectedTag && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedTag(null)}
+        >
+          <div
+            className="bg-white rounded-xl p-6 max-w-sm w-full"
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-4">{selectedTag.clothing_name}</h3>
+            <div className="space-y-2">
+              <p>
+                <span className="font-medium">Precio: </span>
+                <span className="text-wearvana-accent">{selectedTag.current_price}€</span>
+              </p>
+              <p>
+                <span className="font-medium">Marca: </span>
+                <span>{selectedTag.brand}</span>
+              </p>
+              <a
+                href={selectedTag.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block mt-4 wearvana-button text-center"
+              >
+                Ver producto
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
