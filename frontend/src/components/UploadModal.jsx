@@ -13,6 +13,7 @@ export default function UploadModal({ isOpen, onClose }) {
   const [tagPosition, setTagPosition] = useState({ x: 0, y: 0 });
   const [currentTag, setCurrentTag] = useState(null);
   const [title, setTitle] = useState("");
+
   const { userID } = useContext(authContext);
 
   const fileInputRef = useRef(null);
@@ -21,8 +22,7 @@ export default function UploadModal({ isOpen, onClose }) {
   const canvasRef = useRef(null);
   const imageRef = useRef(null);
 
-  const [isCapturingProduct, setIsCapturingProduct] = useState(false);
-  const [productUrl, setProductUrl] = useState("");
+  const [draggingTag, setDraggingTag] = useState(null);
 
   // Add scroll lock effect
   useEffect(() => {
@@ -160,8 +160,19 @@ export default function UploadModal({ isOpen, onClose }) {
     if (!imageRef.current || !showTagModal) return;
 
     const rect = imageRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const naturalWidth = imageRef.current.naturalWidth;
+    const min_image_x = ((rect.width - naturalWidth) / 2 / rect.width) * 100;
+    const max_image_x = 100 - min_image_x;
+    console.log(rect.width);
+    console.log(naturalWidth);
+    const x = Math.min(
+      max_image_x,
+      Math.max(min_image_x, ((e.clientX - rect.left) / rect.width) * 100)
+    );
+    const y = Math.min(
+      max_image_x,
+      Math.max(min_image_x, ((e.clientY - rect.top) / rect.height) * 100)
+    );
 
     setTagPosition({ x, y });
     setCurrentTag("new");
@@ -187,7 +198,10 @@ export default function UploadModal({ isOpen, onClose }) {
 
   const handleEditTag = (index) => {
     setCurrentTag(index);
-    setTagPosition(productTags[index].position);
+    setTagPosition({
+      x: productTags[index].x_coord,
+      y: productTags[index].y_coord,
+    });
     setShowTagModal(true);
   };
 
@@ -208,6 +222,63 @@ export default function UploadModal({ isOpen, onClose }) {
       title,
       tags
     );
+  };
+
+  const handleDragStart = (index) => (e) => {
+    setDraggingTag(index);
+  };
+
+  const handleDrag = (e) => {
+    if (draggingTag === null || !imageRef.current) return;
+
+    const rect = imageRef.current.getBoundingClientRect();
+    const naturalWidth = imageRef.current.naturalWidth;
+    const min_image_x = ((rect.width - naturalWidth) / 2 / rect.width) * 100;
+    const max_image_x = 100 - min_image_x;
+    console.log(rect.width);
+    console.log(naturalWidth);
+    const x = Math.min(
+      max_image_x,
+      Math.max(min_image_x, ((e.clientX - rect.left) / rect.width) * 100)
+    );
+    const y = Math.min(
+      max_image_x,
+      Math.max(min_image_x, ((e.clientY - rect.top) / rect.height) * 100)
+    );
+
+    setProductTags((tags) =>
+      tags.map((tag, i) =>
+        i === draggingTag ? { ...tag, x_coord: x, y_coord: y } : tag
+      )
+    );
+  };
+
+  const handleDragEnd = (e) => {
+    if (draggingTag === null || !imageRef.current) return;
+
+    const rect = imageRef.current.getBoundingClientRect();
+    const naturalWidth = imageRef.current.naturalWidth;
+    const min_image_x = ((rect.width - naturalWidth) / 2 / rect.width) * 100;
+    const max_image_x = 100 - min_image_x;
+    console.log(rect.width);
+    console.log(naturalWidth);
+    const x = Math.min(
+      max_image_x,
+      Math.max(min_image_x, ((e.clientX - rect.left) / rect.width) * 100)
+    );
+    const y = Math.min(
+      max_image_x,
+      Math.max(min_image_x, ((e.clientY - rect.top) / rect.height) * 100)
+    );
+
+    setProductTags((tags) =>
+      tags.map((tag, i) =>
+        i === draggingTag ? { ...tag, x_coord: x, y_coord: y } : tag
+      )
+    );
+    setDraggingTag(null);
+    console.log("Tag dragged");
+    console.log(productTags);
   };
 
   if (!isOpen) return null;
@@ -280,6 +351,10 @@ export default function UploadModal({ isOpen, onClose }) {
                       left: `${tag.x_coord}%`,
                       top: `${tag.y_coord}%`,
                     }}
+                    draggable
+                    onDragStart={handleDragStart(index)}
+                    onDrag={handleDrag}
+                    onDragEnd={handleDragEnd}
                   >
                     <Plus className="h-4 w-4" />
                   </button>
