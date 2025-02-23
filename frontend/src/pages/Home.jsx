@@ -35,7 +35,7 @@ const posts = [
     id: 1,
     username: "minimal_style",
     likes: 2345,
-    caption: "Minimal vibes for spring 🌸 #InditexStyle",
+    caption: "Estilo minimalista para a primavera 🌸 #EstiloInditex",
   },
 ];
 
@@ -198,7 +198,7 @@ export default function Home() {
           allPosts.push(...postsWithUser);
         } catch (error) {
           console.error(
-            `Error fetching posts for user ${user.user_id}:`,
+            `Erro ao obter publicacións do usuario ${user.user_id}:`,
             error
           );
         }
@@ -208,7 +208,7 @@ export default function Home() {
       allPosts.sort((a, b) => b.post_id - a.post_id);
       setPosts(allPosts);
     } catch (error) {
-      console.error("Error fetching posts:", error);
+      console.error("Erro ao obter publicacións:", error);
     } finally {
       setInitialLoading(false);
       setRefreshing(false);

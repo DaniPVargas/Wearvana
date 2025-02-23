@@ -156,14 +156,14 @@ export default function UploadModal({ isOpen, onClose }) {
             setCameraError(null);
           })
           .catch((err) => {
-            console.error("Error playing video:", err);
+            console.error("Erro ao reproducir o vídeo:", err);
             setCameraError(
               "Erro ao iniciar a cámara. Por favor, recarga a páxina"
             );
           });
       });
     } catch (err) {
-      console.error("Error accessing camera:", err);
+      console.error("Erro ao acceder á cámara:", err);
       setCameraError(
         "Non se puido acceder á cámara. Por favor, permite o acceso"
       );
@@ -203,7 +203,7 @@ export default function UploadModal({ isOpen, onClose }) {
         0.8
       );
     } catch (error) {
-      console.error("Error capturing photo:", error);
+      console.error("Erro ao capturar a foto:", error);
       setCameraError("Erro ao capturar a foto. Por favor, inténtao de novo.");
     }
   };

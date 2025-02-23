@@ -45,7 +45,7 @@ export default function LoginPage() {
       <section className="w-full p-6 bg-white rounded-lg shadow-lg">
         <img src="/logo.svg" alt="Logo" className="mx-auto mb-4 w-48 h-48" />
         <p className="text-center text-lg text-gray-500 mb-12">
-          The Fashion Social Network
+          A Rede Social da Moda
         </p>
         <button
           onClick={handleSubmit}

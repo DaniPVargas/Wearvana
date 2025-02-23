@@ -86,16 +86,16 @@ export default function Post({ username, userImage, images, likes, caption }) {
       <div className="px-4 pt-4">
         <div className="flex justify-between items-center mb-3">
           <div className="flex gap-4">
-            <button aria-label="Like post">
+            <button aria-label="Gústame a publicación">
               <Heart className="w-[22px] h-[22px]" />
             </button>
-            <button aria-label="Share post">
+            <button aria-label="Compartir publicación">
               <Share className="w-[22px] h-[22px]" />
             </button>
           </div>
         </div>
         <div className="text-sm">
-          <p className="font-medium mb-1">{likes} likes</p>
+          <p className="font-medium mb-1">{likes} gústame</p>
           <p>
             <Link to={`/user/${username}`} className="font-medium hover:underline">
               {username}
@@ -107,4 +107,3 @@ export default function Post({ username, userImage, images, likes, caption }) {
     </div>
   )
 }
-

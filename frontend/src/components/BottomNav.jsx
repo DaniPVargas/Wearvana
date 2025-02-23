@@ -57,7 +57,7 @@ export default function BottomNav() {
           setUser(userData);
           setNewDescription(userData.description || "");
         } catch (error) {
-          console.error("Error fetching user data:", error);
+          console.error("Erro ao buscar datos do usuario:", error);
         }
       }
     };
@@ -70,12 +70,12 @@ export default function BottomNav() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      alert("Por favor, selecciona una imagen.");
+      alert("Por favor, selecciona unha imaxe.");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("La imagen no puede superar los 5MB.");
+      alert("A imaxe non pode superar os 5MB.");
       return;
     }
 
@@ -118,8 +118,8 @@ export default function BottomNav() {
       setNewProfileImage(null);
       setNewProfileImagePreview(null);
     } catch (error) {
-      console.error("Error updating profile:", error);
-      alert("Error al actualizar el perfil. Por favor, inténtalo de nuevo.");
+      console.error("Erro ao actualizar o perfil:", error);
+      alert("Erro ao actualizar o perfil. Por favor, inténtao de novo.");
     }
   };
 
@@ -141,7 +141,7 @@ export default function BottomNav() {
       });
 
       if (!videoRef.current) {
-        throw new Error("Video element not found");
+        throw new Error("Non se atopou o elemento de vídeo");
       }
 
       videoRef.current.srcObject = stream;
@@ -155,16 +155,16 @@ export default function BottomNav() {
             setCameraError(null);
           })
           .catch((err) => {
-            console.error("Error playing video:", err);
+            console.error("Erro ao reproducir o vídeo:", err);
             setCameraError(
-              "Error al iniciar la cámara. Por favor, recarga la página."
+              "Erro ao iniciar a cámara. Por favor, recarga a páxina."
             );
           });
       });
     } catch (err) {
-      console.error("Error accessing camera:", err);
+      console.error("Erro ao acceder á cámara:", err);
       setCameraError(
-        "No se pudo acceder a la cámara. Por favor, permite el acceso."
+        "Non se puido acceder á cámara. Por favor, permite o acceso."
       );
       setShowCamera(false);
     }
@@ -173,7 +173,7 @@ export default function BottomNav() {
   const capturePhoto = () => {
     try {
       if (!videoRef.current || !canvasRef.current) {
-        console.error("Video or canvas element not found");
+        console.error("Non se atopou o vídeo ou o canvas");
         return;
       }
 
@@ -189,7 +189,7 @@ export default function BottomNav() {
       canvas.toBlob(
         async (blob) => {
           if (!blob) {
-            console.error("Failed to capture photo");
+            console.error("Erro ao capturar a foto");
             return;
           }
 
@@ -202,9 +202,9 @@ export default function BottomNav() {
         0.8
       );
     } catch (error) {
-      console.error("Error capturing photo:", error);
+      console.error("Erro ao capturar a foto:", error);
       setCameraError(
-        "Error al capturar la foto. Por favor, inténtalo de nuevo."
+        "Erro ao capturar a foto. Por favor, inténtao de novo."
       );
     }
   };

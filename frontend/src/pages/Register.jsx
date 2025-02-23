@@ -95,7 +95,7 @@ export default function Register() {
     <div className="max-w-md px-5 mx-auto flex items-center justify-center min-h-screen bg-ig-primary">
       <section className="w-full p-6 bg-white rounded-lg shadow-lg">
         <img src="/logo.svg" alt="Logo" className="mx-auto mb-4 w-48 h-48" />
-        <p className="text-center text-lg text-gray-500 mb-12">Fashion Social Network</p>
+        <p className="text-center text-lg text-gray-500 mb-12">A Rede Social da Moda</p>
         <div className="mb-4">
           <input
             type="text"
