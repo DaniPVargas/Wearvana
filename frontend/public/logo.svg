@@ -14,7 +14,10 @@
    preserveAspectRatio="xMidYMid meet"
    id="svg64"
    sodipodi:docname="Wearvana_logo.svg"
-   inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)">
+   inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
+   inkscape:export-filename="/home/daniel/Descargas/Wearvana_logo.png"
+   inkscape:export-xdpi="200"
+   inkscape:export-ydpi="200">
   <metadata
      id="metadata70">
     <rdf:RDF>
@@ -23,7 +26,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -43,7 +46,7 @@
      id="namedview66"
      showgrid="false"
      inkscape:zoom="0.4916113"
-     inkscape:cx="1115.6271"
+     inkscape:cx="636.5901"
      inkscape:cy="705.28182"
      inkscape:window-x="88"
      inkscape:window-y="27"

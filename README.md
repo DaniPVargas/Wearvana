@@ -1,7 +1,6 @@
 # Wearvana: The fashion social network
 
-![Wearvana logo](../frontend/public/logo.svg)
-
+<img src="./frontend/public/logo_circle.svg" width="200" alt="Wearvana logo"/>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](https://opensource.org/licenses/MIT)
 
