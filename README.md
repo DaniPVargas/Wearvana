@@ -11,7 +11,7 @@ Wearvana, as our logo says, is **_the fashion social network_**. Using Inditex's
 
 ## Running Wearvana locally
 ### Wearvana backend
-The first thing you need to use Wearvana locally is to prepare and run the backedn, which will be the responsible of responding all your requests. To have a fast an easy way of prepare and install all of the necessary dependencies, we have chosen to use `uv`. `uv` is an extremely fast Python package installer and resolver, written in Rust, and designed as a drop-in replacement for pip and pip-tools workflows. To use it you only need to install `uv` [How to install `uv`?](https://docs.astral.sh/uv/getting-started/installation/), change to `backend` directory and run the following command from the terminal:
+The first thing you need to use Wearvana locally is to prepare and run the backedn, which will be the responsible of responding all your requests. To have a fast an easy way of prepare and install all of the necessary dependencies, we have chosen to use `uv`. `uv` is an extremely fast Python package installer and resolver, written in Rust, and designed as a drop-in replacement for pip and pip-tools workflows. To use it you only need to install `uv` [(How to install uv ?)](https://docs.astral.sh/uv/getting-started/installation/), change to `backend` directory and run the following command from the terminal:
 
 `uv sync`
 
