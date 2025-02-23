@@ -2,6 +2,7 @@ import { useContext, useState, useRef, useEffect } from "react";
 import { Camera, Image, X, Plus, Link as LinkIcon, Send } from "lucide-react";
 import AuthClient from "../services/AuthClient";
 import authContext from "../context/AuthProvider";
+import "../css/uploadModel.css";
 
 export default function UploadModal({ isOpen, onClose }) {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -12,6 +13,7 @@ export default function UploadModal({ isOpen, onClose }) {
   const [productTags, setProductTags] = useState([]);
   const [tagPosition, setTagPosition] = useState({ x: 0, y: 0 });
   const [currentTag, setCurrentTag] = useState(null);
+  const [suggestions, setSuggestions] = useState(null);
   const [title, setTitle] = useState("");
 
   const { userID } = useContext(authContext);
@@ -28,6 +30,7 @@ export default function UploadModal({ isOpen, onClose }) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
+      setSuggestions(null);
     } else {
       document.body.style.overflow = "";
     }
@@ -35,6 +38,18 @@ export default function UploadModal({ isOpen, onClose }) {
       document.body.style.overflow = "";
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    const fetchImageSearch = async () => {
+      if (!selectedImage) return;
+      const authClientInstance = new AuthClient();
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setSuggestions(
+        await authClientInstance.imageSearch(selectedImage, userID)
+      );
+    };
+    fetchImageSearch();
+  }, [userID, selectedImage]);
 
   const handleImageUpload = (e) => {
     e.preventDefault();
@@ -46,12 +61,12 @@ export default function UploadModal({ isOpen, onClose }) {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      alert("Por favor, selecciona una imagen.");
+      alert("Por favor, selecciona unha imaxe");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("La imagen no puede superar los 5MB.");
+      alert("A imaxe non pode superar os 5MB");
       return;
     }
 
@@ -77,7 +92,7 @@ export default function UploadModal({ isOpen, onClose }) {
       });
 
       if (!videoRef.current) {
-        throw new Error("Video element not found");
+        throw new Error("Non se atopou o elemento de vídeo");
       }
 
       videoRef.current.srcObject = stream;
@@ -93,14 +108,14 @@ export default function UploadModal({ isOpen, onClose }) {
           .catch((err) => {
             console.error("Error playing video:", err);
             setCameraError(
-              "Error al iniciar la cámara. Por favor, recarga la página."
+              "Erro ao iniciar a cámara. Por favor, recarga a páxina"
             );
           });
       });
     } catch (err) {
       console.error("Error accessing camera:", err);
       setCameraError(
-        "No se pudo acceder a la cámara. Por favor, permite el acceso."
+        "Non se puido acceder á cámara. Por favor, permite o acceso"
       );
       setShowCamera(false);
     }
@@ -109,7 +124,7 @@ export default function UploadModal({ isOpen, onClose }) {
   const capturePhoto = () => {
     try {
       if (!videoRef.current || !canvasRef.current) {
-        console.error("Video or canvas element not found");
+        console.error("Non se atopou o vídeo ou o canvas");
         return;
       }
 
@@ -125,7 +140,7 @@ export default function UploadModal({ isOpen, onClose }) {
       canvas.toBlob(
         async (blob) => {
           if (!blob) {
-            console.error("Failed to capture photo");
+            console.error("Erro ao capturar a foto");
             return;
           }
 
@@ -139,9 +154,7 @@ export default function UploadModal({ isOpen, onClose }) {
       );
     } catch (error) {
       console.error("Error capturing photo:", error);
-      setCameraError(
-        "Error al capturar la foto. Por favor, inténtalo de nuevo."
-      );
+      setCameraError("Erro ao capturar a foto. Por favor, inténtao de novo.");
     }
   };
 
@@ -191,7 +204,14 @@ export default function UploadModal({ isOpen, onClose }) {
   };
 
   const handleRemoveTag = (index) => {
+    const removedTag = productTags[index];
     setProductTags((tags) => tags.filter((_, i) => i !== index));
+    // We make avaible again the add button
+    setSuggestions((prevSuggestions) =>
+      prevSuggestions.map((s) =>
+        s.clothing_name === removedTag.name ? { ...s, accepted: false } : s
+      )
+    );
   };
 
   const handleEditTag = (index) => {
@@ -209,6 +229,7 @@ export default function UploadModal({ isOpen, onClose }) {
     setProductTags([]);
     setTitle("");
     stopCamera();
+    setSuggestions(null);
     onClose();
   };
 
@@ -273,6 +294,34 @@ export default function UploadModal({ isOpen, onClose }) {
     setDraggingTag(null);
   };
 
+  const handleAcceptSuggestion = (suggestion, index) => {
+    const randomX = Math.random() * 100;
+    const randomY = Math.random() * 100;
+
+    setProductTags((tags) => [
+      ...tags,
+      {
+        name: suggestion.clothing_name,
+        link: suggestion.link,
+        price: suggestion.current_price,
+        x_coord: randomX,
+        y_coord: randomY,
+      },
+    ]);
+
+    setSuggestions((prevSuggestions) =>
+      prevSuggestions.map((s, i) =>
+        i === index ? { ...s, accepted: true } : s
+      )
+    );
+  };
+
+  const handleRemoveSuggestion = (index) => {
+    setSuggestions((prevSuggestions) =>
+      prevSuggestions.filter((_, i) => i !== index)
+    );
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -305,14 +354,14 @@ export default function UploadModal({ isOpen, onClose }) {
                 className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
               >
                 <Camera className="h-5 w-5" />
-                <span>Hacer foto</span>
+                <span>Facer foto</span>
               </button>
               <button
                 onClick={handleImageUpload}
                 className="wearvana-button w-full flex items-center justify-center gap-2 py-3 !bg-white !text-black border border-gray-200"
               >
                 <Image className="h-5 w-5" />
-                <span>Subir de galería</span>
+                <span>Subir da galería</span>
               </button>
               <input
                 type="file"
@@ -368,6 +417,65 @@ export default function UploadModal({ isOpen, onClose }) {
                   className="wearvana-input w-full"
                 />
               </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-1 mt-1">Suxestións</h3>
+                {suggestions === null ? (
+                  <>
+                    <h4 className="ms-1  font-medium text-gray-600">
+                      Cargando{" "}
+                      <small className="loading-dots">
+                        <span>.</span> <span>.</span> <span>.</span>
+                      </small>
+                    </h4>
+                  </>
+                ) : suggestions.length == 0 ? (
+                  <h4 className="ms-1 font-medium text-gray-700">
+                    Non hai suxestións
+                  </h4>
+                ) : (
+                  suggestions.map((suggestion, index) => (
+                    <div
+                      key={index}
+                      className="ms-1 flex flex-col items-start mt-2"
+                    >
+                      <div className="flex justify-between w-full pe-5">
+                        <div className="flex flex-col">
+                          <span className="text-lg text-gray-700">
+                            {suggestion.brand}
+                          </span>
+                          <a
+                            href={suggestion.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-black-800 font-semibold hover:underline"
+                          >
+                            {suggestion.clothing_name}
+                          </a>
+                        </div>
+                        <div className="flex gap-2 mt-1">
+                          <button
+                            onClick={() =>
+                              handleAcceptSuggestion(suggestion, index)
+                            }
+                            className={`black-button ${
+                              suggestion.accepted ? "disabled-button" : ""
+                            }`}
+                            disabled={suggestion.accepted}
+                          >
+                            <Plus />
+                          </button>
+                          <button
+                            onClick={() => handleRemoveSuggestion(index)}
+                            className="black-button"
+                          >
+                            <X />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
               <button
                 className={`wearvana-button w-full flex items-center justify-center gap-2 py-3 ${
                   showTagModal
@@ -417,8 +525,8 @@ export default function UploadModal({ isOpen, onClose }) {
           <div className="bg-white w-full max-w-sm rounded-xl p-6">
             <h3 className="text-lg font-semibold mb-4">
               {typeof currentTag === "number"
-                ? "Editar producto"
-                : "Detalles del producto"}
+                ? "Editar produto"
+                : "Detalles do produto"}
             </h3>
             <form
               onSubmit={(e) => {
@@ -498,7 +606,9 @@ export default function UploadModal({ isOpen, onClose }) {
                 )}
                 <button
                   type="button"
-                  onClick={() => setCurrentTag(null)}
+                  onClick={() => {
+                    setCurrentTag(null);
+                  }}
                   className="flex-1 py-2 px-4 border border-gray-200 rounded-lg hover:bg-gray-50"
                 >
                   Cancelar
@@ -514,7 +624,7 @@ export default function UploadModal({ isOpen, onClose }) {
 
       {/* Camera View */}
       {showCamera && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[80] flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[90] flex items-center justify-center">
           <div className="relative w-full max-w-md aspect-square bg-black rounded-xl overflow-hidden m-4">
             <video
               ref={videoRef}

@@ -227,6 +227,7 @@ export default function BottomNav() {
 
   const navItems = [
     { icon: Home, label: "Inicio", path: "/" },
+    { icon: Search, label: "Buscar", path: "/search" },
     { icon: Telescope, label: "Explorar", path: "/explore" },
     { icon: User, label: "Perfil", path: "/profile" },
   ];

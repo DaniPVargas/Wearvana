@@ -7,6 +7,7 @@ import { AuthProvider } from "./context/AuthProvider";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Explore from "./pages/Explore";
+import SearchUser from "./pages/SearchUser";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function Root() {
@@ -22,6 +23,7 @@ function Root() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/user/:username" element={<UserProfile />} />
               <Route path="/explore" element={<Explore />} />
+              <Route path="/search" element={<SearchUser />} />
             </Route>
           </Routes>
         </Layout>

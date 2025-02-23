@@ -55,11 +55,14 @@ function ProductCard({
   );
 }
 
-function EmptyState({ message }) {
+function EmptyState({ message, icon: Icon = SearchX, suggestion }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4">
-      <SearchX className="h-12 w-12 text-gray-400 mb-4" />
-      <p className="text-gray-500 text-center">{message}</p>
+      <Icon className="h-12 w-12 text-gray-400 mb-4" />
+      <p className="text-gray-500 text-center mb-2">{message}</p>
+      {suggestion && (
+        <p className="text-sm text-gray-400 text-center">{suggestion}</p>
+      )}
     </div>
   );
 }
@@ -131,14 +134,16 @@ export default function Explore() {
 
     setIsLoading(true);
     setHasSearched(true);
+    setSearchResults([]);
 
     const authClientInstance = new AuthClient();
 
     try {
       const data = await authClientInstance.textSearch(searchQuery);
-      setSearchResults(data);
+      setSearchResults(data || []);
     } catch (error) {
       console.log(error);
+      setSearchResults([]);
     } finally {
       setIsLoading(false);
     }
@@ -152,14 +157,16 @@ export default function Explore() {
   const searchByImage = async (file) => {
     setIsLoading(true);
     setHasSearched(true);
+    setInspirationResults([]);
 
     const authClientInstance = new AuthClient();
 
     try {
       const data = await authClientInstance.imageSearch(file, userID);
-      setInspirationResults(data);
+      setInspirationResults(data || []);
     } catch (error) {
       console.log(error);
+      setInspirationResults([]);
     } finally {
       setIsLoading(false);
     }
@@ -516,21 +523,38 @@ export default function Explore() {
             <div className="max-w-7xl mx-auto">
               {shouldShowProducts ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                  {isLoading
-                    ? Array(6)
-                        .fill(null)
-                        .map((_, i) => <ProductCard key={i} loading={true} />)
-                    : (activeTab === "search" ? searchResults : inspirationResults).map((product, index) => (
-                        <ProductCard
-                          key={index}
-                          name={product.name}
-                          current_price={product.current_price}
-                          original_price={product.original_price}
-                          link={product.link}
-                          brand={product.brand}
-                          loading={false}
-                        />
-                      ))}
+                  {isLoading ? (
+                    Array(6)
+                      .fill(null)
+                      .map((_, i) => <ProductCard key={i} loading={true} />)
+                  ) : (activeTab === "search" ? searchResults : inspirationResults).length > 0 ? (
+                    (activeTab === "search" ? searchResults : inspirationResults).map((product, index) => (
+                      <ProductCard
+                        key={index}
+                        name={product.name}
+                        current_price={product.current_price}
+                        original_price={product.original_price}
+                        link={product.link}
+                        brand={product.brand}
+                        loading={false}
+                      />
+                    ))
+                  ) : (
+                    <div className="col-span-full">
+                      <EmptyState
+                        message={
+                          activeTab === "search"
+                            ? "No se encontraron productos que coincidan con tu búsqueda"
+                            : "No se encontraron productos similares a tu imagen"
+                        }
+                        suggestion={
+                          activeTab === "search"
+                            ? "Intenta con otros términos o categorías"
+                            : "Prueba con otra imagen o ajusta el encuadre de la foto"
+                        }
+                      />
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="max-w-2xl mx-auto">

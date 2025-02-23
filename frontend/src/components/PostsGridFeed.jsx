@@ -1,5 +1,7 @@
 import { Heart, Share2, Copy, Mail, MessageCircle, Check, ArrowLeft } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { useState, useRef, useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import AuthContext from '../context/AuthProvider';
 
 export default function PostsGridFeed({ posts, user, onBackClick }) {
   const [selectedPost, setSelectedPost] = useState(null);
@@ -10,12 +12,23 @@ export default function PostsGridFeed({ posts, user, onBackClick }) {
   const [selectedTag, setSelectedTag] = useState(null);
   const shareMenuRef = useRef(null);
   const selectedPostRef = useRef(null);
+  const { userID } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const handlePostClick = (post) => {
     setSelectedPost(post);
     setTimeout(() => {
       selectedPostRef.current?.scrollIntoView({ behavior: 'instant', block: 'start' });
     }, 0);
+  };
+
+  const handleProfileClick = (e, userId) => {
+    e.preventDefault();
+    if (userId === userID) {
+      navigate('/profile');
+    } else {
+      navigate(`/user/${userId}`);
+    }
   };
 
   const handleTagClick = (e, tag) => {
@@ -111,12 +124,20 @@ export default function PostsGridFeed({ posts, user, onBackClick }) {
               <div className="bg-white">
                 {/* Post Header */}
                 <div className="flex items-center gap-3 p-4">
-                  <img
-                    src={user.profile_picture_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.user_alias}`}
-                    alt={user.user_alias}
-                    className="w-8 h-8 rounded-full"
-                  />
-                  <span className="font-medium">{user.user_alias}</span>
+                  <a
+                    href="#"
+                    onClick={(e) => handleProfileClick(e, user.user_id)}
+                    className="flex items-center gap-3 hover:opacity-80"
+                  >
+                    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                      <img
+                        src={user.profile_picture_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.user_alias}`}
+                        alt={user.user_alias}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <span className="font-medium">{user.user_alias}</span>
+                  </a>
                 </div>
 
                 {/* Post Image with Tags */}

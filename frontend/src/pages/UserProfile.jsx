@@ -32,18 +32,26 @@ export default function UserProfile() {
       try {
         const authClientInstance = new AuthClient();
         
-        // Get user directly using the ID
+        // Get user data
         const userData = await authClientInstance.getUser(username);
         setUser(userData);
 
-        // Update URL to show username instead of ID
-        if (userData && userData.user_alias !== username) {
+        // If this is the current user's profile, redirect to /profile
+        if (userData.user_id === userID) {
+          navigate('/profile', { replace: true });
+          return;
+        }
+
+        // Update URL to show username instead of ID if we came from a user_id URL
+        if (userData && !isNaN(username) && userData.user_alias !== username) {
           navigate(`/user/${userData.user_alias}`, { replace: true });
         }
 
         // Fetch user's posts
-        const userPosts = await authClientInstance.getUserPosts(username);
-        setPosts(userPosts);
+        const postsData = await authClientInstance.getUserPosts(username);
+        // Sort posts by post_id in descending order (newest first)
+        const sortedPosts = postsData.sort((a, b) => b.post_id - a.post_id);
+        setPosts(sortedPosts);
       } catch (error) {
         console.error('Error fetching user data:', error);
       } finally {
@@ -60,7 +68,7 @@ export default function UserProfile() {
       setPosts([]);
       setIsLoading(true);
     };
-  }, [username, navigate]);
+  }, [username, navigate, userID]);
 
   // Scroll to top when username changes
   useEffect(() => {
@@ -211,11 +219,13 @@ export default function UserProfile() {
             {/* Profile Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
               <div className="flex items-center gap-6">
-                <img
-                  src={user.profile_picture_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.user_alias}`}
-                  alt={user.user_alias}
-                  className="w-20 h-20 md:w-32 md:h-32 rounded-full border-2 border-gray-200"
-                />
+                <div className="w-20 h-20 md:w-32 md:h-32 rounded-full overflow-hidden flex-shrink-0 border-2 border-gray-200">
+                  <img
+                    src={user.profile_picture_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.user_alias}`}
+                    alt={user.user_alias}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
                 <div>
                   <h1 className="text-2xl md:text-3xl font-bold">{user.user_alias}</h1>
                   <p className="text-gray-600 text-lg">@{user.user_alias.toLowerCase()}</p>
