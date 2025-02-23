@@ -130,6 +130,7 @@ export default class AuthClient {
 
   async publicatePost(userID, image, title, tags) {
     const image_url = await this.uploadImage(image, userID);
+    console.log(tags);
     const response = await fetch(`${this.apiBaseUrl}/users/${userID}/posts`, {
       method: "POST",
       headers: {
