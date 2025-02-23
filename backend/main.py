@@ -6,6 +6,7 @@ import requests
 import shutil
 import sqlite3
 import uuid
+from PIL import Image
 from pathlib import Path
 from typing import Any
 from datetime import datetime, timedelta
@@ -405,12 +406,18 @@ async def search_clothing(query: str, brand: str = "") -> list[Reference]:
 def upload_picture(user_id: str, file: UploadFile = File(...)) -> dict[str, str]:
     Path(f"{settings.pictures_dir}/{user_id}").mkdir(parents=True, exist_ok=True)
 
-    picture_id = str(uuid.uuid4())
+    picture_id = str(uuid.uuid4())    
 
-    # TODO: Convert image to JPG if necessary
+    temp_path = f"/temp/image_temp"
 
-    with open(f"{settings.pictures_dir}/{user_id}/{picture_id}.jpg", "wb") as buffer:
+    with open(temp_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
+    
+    with Image.open(temp_path) as img:
+        img = img.convert("RGB")
+        img.save(f"{settings.pictures_dir}/{user_id}/{picture_id}.jpg", "JPEG", quality=95)
+
+    Path(temp_path).unlink()
 
     picture_url = f"https://wearvana.onrender.com/pictures/{user_id}/{picture_id}"
 
