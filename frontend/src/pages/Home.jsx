@@ -59,7 +59,8 @@ const LikeConfetti = ({ active }) => {
 
 export default function Home() {
   const [posts, setPosts] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [initialLoading, setInitialLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [pullProgress, setPullProgress] = useState(0)
   const [pullStartY, setPullStartY] = useState(0);
@@ -92,6 +93,7 @@ export default function Home() {
   const shareMenuRef = useRef(null)
 
   const loadMorePosts = () => {
+    if (loading) return;
     setLoading(true)
     const newPosts = Array.from({ length: 3 }, () => generatePost(nextPostId.current++))
     setPosts(prev => [...prev, ...newPosts])
@@ -100,7 +102,6 @@ export default function Home() {
 
   const fetchPosts = async () => {
     try {
-      setLoading(true);
       const authClientInstance = new AuthClient()
       
       // Get all users
@@ -128,7 +129,7 @@ export default function Home() {
     } catch (error) {
       console.error('Error fetching posts:', error)
     } finally {
-      setLoading(false)
+      setInitialLoading(false)
       setRefreshing(false)
     }
   }
@@ -186,7 +187,7 @@ export default function Home() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !loading) {
+        if (entries[0].isIntersecting && !loading && !initialLoading) {
           loadMorePosts()
         }
       },
@@ -198,7 +199,7 @@ export default function Home() {
     }
 
     return () => observer.disconnect()
-  }, [loading])
+  }, [loading, initialLoading])
 
   useEffect(() => {
     if (showUploadModal) {
@@ -419,7 +420,7 @@ export default function Home() {
     setShowShareMenu(null);
   };
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-[975px] mx-auto px-0 md:px-8 relative">
