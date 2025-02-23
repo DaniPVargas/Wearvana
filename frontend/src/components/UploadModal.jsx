@@ -69,9 +69,9 @@ export default function UploadModal({ isOpen, onClose }) {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "environment",
-          width: { ideal: 720 },
-          height: { ideal: 1280 },
-          aspectRatio: { ideal: 9 / 16 },
+          width: { ideal: 1080 },
+          height: { ideal: 1080 },
+          aspectRatio: { ideal: 1 }
         },
         audio: false,
       });
@@ -447,8 +447,8 @@ export default function UploadModal({ isOpen, onClose }) {
 
       {/* Camera View */}
       {showCamera && (
-        <div className="fixed inset-0 bg-black z-[80]">
-          <div className="relative h-full">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[80] flex items-center justify-center">
+          <div className="relative w-full max-w-md aspect-square bg-black rounded-xl overflow-hidden m-4">
             <video
               ref={videoRef}
               autoPlay
@@ -467,10 +467,29 @@ export default function UploadModal({ isOpen, onClose }) {
               </div>
             ) : (
               <div className="absolute bottom-0 inset-x-0 p-4 flex justify-center">
-                <button
-                  onClick={capturePhoto}
-                  className="w-16 h-16 rounded-full border-4 border-white"
-                />
+                <div className="w-full px-10 flex items-center">
+                  <button
+                    onClick={stopCamera}
+                    className="p-3 bg-white/90 rounded-full text-black shadow-lg hover:bg-white"
+                    style={{ backdropFilter: "blur(4px)" }}
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                  <div className="flex-grow flex justify-center">
+                    <button
+                      onClick={capturePhoto}
+                      className="p-2 bg-white/90 rounded-full shadow-lg hover:bg-white transform active:scale-95 transition-transform"
+                      style={{
+                        width: "64px",
+                        height: "64px",
+                        backdropFilter: "blur(4px)",
+                      }}
+                    >
+                      <div className="w-full h-full rounded-full border-4 border-black/20" />
+                    </button>
+                  </div>
+                  <div className="w-[44px]" />
+                </div>
               </div>
             )}
           </div>

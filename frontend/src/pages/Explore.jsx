@@ -195,10 +195,10 @@ export default function Explore() {
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: 'environment',
-          width: { ideal: 720 },
-          height: { ideal: 1280 },
-          aspectRatio: { ideal: 9/16 }
+          facingMode: "environment",
+          width: { ideal: 1080 },
+          height: { ideal: 1080 },
+          aspectRatio: { ideal: 1 }
         },
         audio: false,
       });
@@ -411,64 +411,52 @@ export default function Explore() {
                 className="hidden"
               />
               {showCamera ? (
-                <div className="relative mb-4">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      minHeight: "400px",
-                      maxHeight: "80vh",
-                      objectFit: "cover",
-                      backgroundColor: "black",
-                    }}
-                    className="rounded-lg"
-                  />
-                  {flash && (
-                    <div className="absolute inset-0 bg-white animate-flash" />
-                  )}
-                  {cameraError ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
-                      <div className="text-white text-center px-4">
-                        <p className="mb-4">{cameraError}</p>
-                        <button
-                          onClick={stopCamera}
-                          className="wearvana-button"
-                        >
-                          Cerrar
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-end pb-4">
-                      <div className="w-full px-10 flex items-center">
-                        <button
-                          onClick={stopCamera}
-                          className="p-3 bg-white/90 rounded-full text-black shadow-lg hover:bg-white"
-                          style={{ backdropFilter: "blur(4px)" }}
-                        >
-                          <X className="h-5 w-5" />
-                        </button>
-                        <div className="flex-grow flex justify-center">
-                          <button
-                            onClick={capturePhoto}
-                            className="p-2 bg-white/90 rounded-full shadow-lg hover:bg-white transform active:scale-95 transition-transform"
-                            style={{
-                              width: "64px",
-                              height: "64px",
-                              backdropFilter: "blur(4px)",
-                            }}
-                          >
-                            <div className="w-full h-full rounded-full border-4 border-black/20" />
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[80] flex items-center justify-center">
+                  <div className="relative w-full max-w-md aspect-square bg-black rounded-xl overflow-hidden m-4">
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-full object-cover"
+                    />
+                    {cameraError ? (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                        <div className="text-white text-center px-4">
+                          <p className="mb-4">{cameraError}</p>
+                          <button onClick={stopCamera} className="wearvana-button">
+                            Cerrar
                           </button>
                         </div>
-                        <div className="w-[44px]" />
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="absolute bottom-0 inset-x-0 p-4 flex justify-center">
+                        <div className="w-full px-10 flex items-center">
+                          <button
+                            onClick={stopCamera}
+                            className="p-3 bg-white/90 rounded-full text-black shadow-lg hover:bg-white"
+                            style={{ backdropFilter: "blur(4px)" }}
+                          >
+                            <X className="h-5 w-5" />
+                          </button>
+                          <div className="flex-grow flex justify-center">
+                            <button
+                              onClick={capturePhoto}
+                              className="p-2 bg-white/90 rounded-full shadow-lg hover:bg-white transform active:scale-95 transition-transform"
+                              style={{
+                                width: "64px",
+                                height: "64px",
+                                backdropFilter: "blur(4px)",
+                              }}
+                            >
+                              <div className="w-full h-full rounded-full border-4 border-black/20" />
+                            </button>
+                          </div>
+                          <div className="w-[44px]" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : previewUrl ? (
                 <div className="relative mb-4">
