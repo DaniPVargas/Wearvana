@@ -16,6 +16,7 @@ export default function UploadModal({ isOpen, onClose }) {
   const [suggestions, setSuggestions] = useState(null);
   const [publicationStatus, setPublicationStatus] = useState(null); // null, "publishing", "success", "error"
   const [title, setTitle] = useState("");
+  const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
 
   const { userID } = useContext(authContext);
 
@@ -26,17 +27,47 @@ export default function UploadModal({ isOpen, onClose }) {
   const imageRef = useRef(null);
 
   const [draggingTag, setDraggingTag] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [touchStartPos, setTouchStartPos] = useState({ x: 0, y: 0 });
 
   // Add scroll lock effect
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden";
+      // Save the current scroll position and add lock class
+      const scrollY = window.scrollY;
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+      document.body.style.bottom = '0';
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      document.body.classList.add('modal-open');
+      // Reset suggestions when modal opens
       setSuggestions(null);
     } else {
-      document.body.style.overflow = "";
+      // Restore the scroll position
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.bottom = '';
+      document.body.style.paddingRight = '';
+      document.body.classList.remove('modal-open');
+      window.scrollTo(0, parseInt(scrollY || '0', 10) * -1);
     }
+
     return () => {
-      document.body.style.overflow = "";
+      // Cleanup in case component unmounts
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.bottom = '';
+      document.body.style.paddingRight = '';
+      document.body.classList.remove('modal-open');
     };
   }, [isOpen]);
 
@@ -44,12 +75,31 @@ export default function UploadModal({ isOpen, onClose }) {
     const fetchImageSearch = async () => {
       if (!selectedImage) return;
       const authClientInstance = new AuthClient();
-      setSuggestions(
-        await authClientInstance.imageSearch(selectedImage, userID)
-      );
+      const results = await authClientInstance.imageSearch(selectedImage, userID);
+      
+      // Deduplicate suggestions based on clothing_name
+      const uniqueSuggestions = results.reduce((acc, current) => {
+        const existingItem = acc.find(item => item.clothing_name === current.clothing_name);
+        if (!existingItem) {
+          acc.push(current);
+        }
+        return acc;
+      }, []);
+      
+      setSuggestions(uniqueSuggestions);
     };
     fetchImageSearch();
   }, [userID, selectedImage]);
+
+  // Add resize listener
+  useEffect(() => {
+    const handleResize = () => {
+      setIsLandscape(window.innerWidth > window.innerHeight);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleImageUpload = (e) => {
     e.preventDefault();
@@ -308,7 +358,11 @@ export default function UploadModal({ isOpen, onClose }) {
     setProductTags((tags) => [
       ...tags,
       {
-        ...suggestion,
+        clothing_name: suggestion.clothing_name,
+        current_price: suggestion.current_price,
+        original_price: suggestion.original_price || null,
+        brand: suggestion.brand,
+        link: suggestion.link,
         x_coord: randomX,
         y_coord: randomY,
       },
@@ -327,193 +381,300 @@ export default function UploadModal({ isOpen, onClose }) {
     );
   };
 
+  const handleTouchStart = (index) => (e) => {
+    e.preventDefault();
+    setDraggingTag(index);
+    const touch = e.touches[0];
+    setTouchStartPos({ x: touch.clientX, y: touch.clientY });
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e) => {
+    e.preventDefault();
+    if (!isDragging || draggingTag === null || !imageRef.current) return;
+
+    const touch = e.touches[0];
+    const rect = imageRef.current.getBoundingClientRect();
+    const naturalWidth = imageRef.current.naturalWidth;
+    const min_image_x = ((rect.width - naturalWidth) / 2 / rect.width) * 100;
+    const max_image_x = 100 - min_image_x;
+    const x = Math.min(
+      max_image_x,
+      Math.max(min_image_x, ((touch.clientX - rect.left) / rect.width) * 100)
+    );
+    const y = Math.min(
+      max_image_x,
+      Math.max(min_image_x, ((touch.clientY - rect.top) / rect.height) * 100)
+    );
+
+    setProductTags((tags) =>
+      tags.map((tag, i) =>
+        i === draggingTag ? { ...tag, x_coord: x, y_coord: y } : tag
+      )
+    );
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    setDraggingTag(null);
+  };
+
+  const handleMouseDown = (index) => (e) => {
+    e.preventDefault();
+    setDraggingTag(index);
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e) => {
+    e.preventDefault();
+    if (!isDragging || draggingTag === null || !imageRef.current) return;
+
+    const rect = imageRef.current.getBoundingClientRect();
+    const naturalWidth = imageRef.current.naturalWidth;
+    const min_image_x = ((rect.width - naturalWidth) / 2 / rect.width) * 100;
+    const max_image_x = 100 - min_image_x;
+    const x = Math.min(
+      max_image_x,
+      Math.max(min_image_x, ((e.clientX - rect.left) / rect.width) * 100)
+    );
+    const y = Math.min(
+      max_image_x,
+      Math.max(min_image_x, ((e.clientY - rect.top) / rect.height) * 100)
+    );
+
+    setProductTags((tags) =>
+      tags.map((tag, i) =>
+        i === draggingTag ? { ...tag, x_coord: x, y_coord: y } : tag
+      )
+    );
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setDraggingTag(null);
+  };
+
+  // Add event listeners for mouse move and up
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleTouchMove, { passive: false });
+      window.addEventListener('touchend', handleTouchEnd);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isDragging]);
+
   if (!isOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/50 z-[70] overflow-hidden"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           handleClose();
         }
       }}
     >
-      <div className="bg-white w-full max-w-lg rounded-xl overflow-hidden">
-        {/* Modal Header */}
-        <div className="border-b border-gray-200 p-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Nova publicación</h2>
-          <button
-            onClick={handleClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
+      <div className="h-full flex items-center justify-center p-4">
+        <div className="bg-white w-full max-w-lg rounded-xl overflow-hidden max-h-[90vh] flex flex-col">
+          {/* Modal Header */}
+          <div className="border-b border-gray-200 p-4 flex items-center justify-between flex-shrink-0">
+            <h2 className="text-lg font-semibold">Nova publicación</h2>
+            <button
+              onClick={handleClose}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
 
-        {/* Modal Content */}
-        <div className="p-4">
-          {!selectedImage ? (
-            <div className="space-y-4">
-              <button
-                onClick={startCamera}
-                className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
-              >
-                <Camera className="h-5 w-5" />
-                <span>Facer foto</span>
-              </button>
-              <button
-                onClick={handleImageUpload}
-                className="wearvana-button w-full flex items-center justify-center gap-2 py-3 !bg-white !text-black border border-gray-200"
-              >
-                <Image className="h-5 w-5" />
-                <span>Subir da galería</span>
-              </button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileSelect}
-                accept="image/*"
-                className="hidden"
-              />
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="relative">
-                <img
-                  ref={imageRef}
-                  src={previewUrl}
-                  alt="Preview"
-                  className="w-full aspect-square object-cover rounded-lg"
-                  onClick={handleImageClick}
-                  style={{ cursor: showTagModal ? "crosshair" : "default" }}
-                />
-                {/* Product Tags */}
-                {productTags.map((tag, index) => (
+          {/* Modal Content - Scrollable */}
+          <div className="p-4 overflow-y-auto flex-grow modal-content">
+            <div className="h-full" style={{ overscrollBehavior: 'contain' }}>
+              {!selectedImage ? (
+                <div className="space-y-4">
                   <button
-                    key={index}
-                    onClick={() => handleEditTag(index)}
-                    className="absolute w-6 h-6 -ml-3 -mt-3 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
-                    style={{
-                      left: `${tag.x_coord}%`,
-                      top: `${tag.y_coord}%`,
-                    }}
-                    draggable
-                    onDragStart={handleDragStart(index)}
-                    onDrag={handleDrag}
-                    onDragEnd={handleDragEnd}
+                    onClick={startCamera}
+                    className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
                   >
-                    <Plus className="h-4 w-4" />
+                    <Camera className="h-5 w-5" />
+                    <span>Facer foto</span>
                   </button>
-                ))}
-              </div>
-              <div>
-                <label
-                  htmlFor="title"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Título da publicación
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Escribe un título para a túa publicación..."
-                  className="wearvana-input w-full"
-                />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-1 mt-1">Suxestións</h3>
-                {suggestions === null ? (
-                  <>
-                    <h4 className="ms-1  font-medium text-gray-600">
-                      Cargando{" "}
-                      <small className="loading-dots">
-                        <span>.</span> <span>.</span> <span>.</span>
-                      </small>
-                    </h4>
-                  </>
-                ) : suggestions.length == 0 ? (
-                  <h4 className="ms-1 font-medium text-gray-700">
-                    Non hai suxestións
-                  </h4>
-                ) : (
-                  suggestions.map((suggestion, index) => (
-                    <div
-                      key={index}
-                      className="ms-1 flex flex-col items-start mt-2"
+                  <button
+                    onClick={handleImageUpload}
+                    className="wearvana-button w-full flex items-center justify-center gap-2 py-3 !bg-white !text-black border border-gray-200"
+                  >
+                    <Image className="h-5 w-5" />
+                    <span>Subir da galería</span>
+                  </button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="relative">
+                    <img
+                      ref={imageRef}
+                      src={previewUrl}
+                      alt="Preview"
+                      className="w-full aspect-square object-cover rounded-lg"
+                      onClick={handleImageClick}
+                      style={{ cursor: showTagModal ? "crosshair" : "default" }}
+                    />
+                    {/* Product Tags */}
+                    {productTags.map((tag, index) => (
+                      <button
+                        key={index}
+                        onClick={() => !isDragging && handleEditTag(index)}
+                        onMouseDown={handleMouseDown(index)}
+                        onTouchStart={handleTouchStart(index)}
+                        className={`absolute w-6 h-6 -ml-3 -mt-3 bg-white rounded-full shadow-lg flex items-center justify-center transition-all
+                          hover:scale-110 hover:cursor-grab active:cursor-grabbing group touch-none`}
+                        style={{
+                          left: `${tag.x_coord}%`,
+                          top: `${tag.y_coord}%`,
+                        }}
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span className="absolute invisible group-hover:visible whitespace-nowrap bg-black/75 text-white text-xs py-1 px-2 rounded-full -top-8 left-1/2 -translate-x-1/2">
+                          Arrastra para mover
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="title"
+                      className="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      <div className="flex justify-between w-full pe-5">
-                        <div className="flex flex-col">
-                          <span className="text-lg text-gray-700">
-                            {suggestion.brand}
-                          </span>
-                          <a
-                            href={suggestion.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-black-800 font-semibold hover:underline"
+                      Título da publicación
+                    </label>
+                    <input
+                      type="text"
+                      id="title"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="Escribe un título para a túa publicación..."
+                      className="wearvana-input w-full"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1 mt-1">Suxestións</h3>
+                    {suggestions === null ? (
+                      <>
+                        <h4 className="ms-1 font-medium text-gray-600">
+                          Cargando{" "}
+                          <small className="loading-dots">
+                            <span>.</span> <span>.</span> <span>.</span>
+                          </small>
+                        </h4>
+                      </>
+                    ) : suggestions.length == 0 ? (
+                      <h4 className="ms-1 font-medium text-gray-700">
+                        Non hai suxestións
+                      </h4>
+                    ) : (
+                      <div 
+                        className={`suggestions-container ${suggestions.length > 2 ? 'has-more' : ''}`}
+                      >
+                        {suggestions.map((suggestion, index) => (
+                          <div
+                            key={index}
+                            className="suggestion-item"
                           >
-                            {suggestion.clothing_name}
-                          </a>
-                        </div>
-                        <div className="flex gap-2 mt-1">
-                          <button
-                            onClick={() =>
-                              handleAcceptSuggestion(suggestion, index)
-                            }
-                            className={`black-button ${
-                              suggestion.accepted ? "disabled-button" : ""
-                            }`}
-                            disabled={suggestion.accepted}
-                          >
-                            <Plus />
-                          </button>
-                          <button
-                            onClick={() => handleRemoveSuggestion(index)}
-                            className="black-button"
-                          >
-                            <X />
-                          </button>
-                        </div>
+                            <div className="flex justify-between items-center">
+                              <div className="flex flex-col">
+                                <span className="text-lg font-medium text-gray-700">
+                                  {suggestion.brand}
+                                </span>
+                                <a
+                                  href={suggestion.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-black-800 font-semibold hover:underline"
+                                >
+                                  {suggestion.clothing_name}
+                                </a>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() =>
+                                    handleAcceptSuggestion(suggestion, index)
+                                  }
+                                  className={`black-button ${
+                                    suggestion.accepted ? "disabled-button" : ""
+                                  }`}
+                                  disabled={suggestion.accepted}
+                                >
+                                  <Plus />
+                                </button>
+                                <button
+                                  onClick={() => handleRemoveSuggestion(index)}
+                                  className="black-button"
+                                >
+                                  <X />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {suggestions.length > 2 && (
+                          <div className="scroll-indicator">
+                            Desliza para ver máis
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))
-                )}
-              </div>
-              <button
-                className={`wearvana-button w-full flex items-center justify-center gap-2 py-3 ${
-                  showTagModal
-                    ? "!bg-wearvana-accent/10 !text-wearvana-accent"
-                    : ""
-                }`}
-                onClick={() => setShowTagModal(!showTagModal)}
-              >
-                <LinkIcon className="h-5 w-5" />
-                <span>
-                  {showTagModal && !currentTag
-                    ? "Selecciona la prenda"
-                    : "Etiquetar productos"}
-                </span>
-              </button>
-              {productTags.length > 0 && title.trim() && (
-                <button
-                  className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
-                  onClick={() => {
-                    publishPost({
-                      image: selectedImage,
-                      title,
-                      tags: productTags,
-                    });
-                    handleClose();
-                  }}
-                >
-                  <Send className="h-5 w-5" />
-                  <span>Publicar</span>
-                </button>
+                    )}
+                  </div>
+                  <button
+                    className={`wearvana-button w-full flex items-center justify-center gap-2 py-3 ${
+                      showTagModal
+                        ? "!bg-wearvana-accent/10 !text-wearvana-accent"
+                        : ""
+                    }`}
+                    onClick={() => setShowTagModal(!showTagModal)}
+                  >
+                    <LinkIcon className="h-5 w-5" />
+                    <span>
+                      {showTagModal && !currentTag
+                        ? "Selecciona la prenda"
+                        : "Etiquetar productos"}
+                    </span>
+                  </button>
+                  <button
+                    className={`wearvana-button w-full flex items-center justify-center gap-2 py-3 ${
+                      !title.trim() ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                    onClick={() => {
+                      if (!title.trim()) return;
+                      publishPost({
+                        image: selectedImage,
+                        title,
+                        tags: productTags,
+                      });
+                      handleClose();
+                    }}
+                    disabled={!title.trim()}
+                  >
+                    <Send className="h-5 w-5" />
+                    <span>Publicar</span>
+                  </button>
+                </div>
               )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -540,7 +701,7 @@ export default function UploadModal({ isOpen, onClose }) {
                 handleAddTag({
                   clothing_name: formData.get("clothing_name"),
                   current_price: formData.get("current_price"),
-                  original_price: null,
+                  original_price: formData.get("original_price") || null,
                   link: formData.get("link"),
                   brand: formData.get("brand"),
                 });
@@ -553,7 +714,7 @@ export default function UploadModal({ isOpen, onClose }) {
                 </label>
                 <input
                   type="text"
-                  name="name"
+                  name="clothing_name"
                   className="wearvana-input"
                   required
                   defaultValue={
@@ -581,17 +742,33 @@ export default function UploadModal({ isOpen, onClose }) {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  Prezo (€)
+                  Prezo actual (€)
                 </label>
                 <input
                   type="number"
-                  name="price"
+                  name="current_price"
                   step="0.01"
                   className="wearvana-input"
                   required
                   defaultValue={
                     currentTag !== null && typeof currentTag === "number"
                       ? productTags[currentTag].current_price
+                      : ""
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Prezo orixinal (€)
+                </label>
+                <input
+                  type="number"
+                  name="original_price"
+                  step="0.01"
+                  className="wearvana-input"
+                  defaultValue={
+                    currentTag !== null && typeof currentTag === "number"
+                      ? productTags[currentTag].original_price || ""
                       : ""
                   }
                 />
