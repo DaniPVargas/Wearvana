@@ -514,7 +514,7 @@ export default function UploadModal({ isOpen, onClose }) {
 
       {/* Camera View */}
       {showCamera && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[80] flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[90] flex items-center justify-center">
           <div className="relative w-full max-w-md aspect-square bg-black rounded-xl overflow-hidden m-4">
             <video
               ref={videoRef}
