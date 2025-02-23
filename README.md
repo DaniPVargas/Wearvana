@@ -12,12 +12,23 @@ Wearvana, as our logo says, is **_the fashion social network_**. Using Inditex's
 ## Running Wearvana locally
 ### Wearvana backend
 The first thing you need to use Wearvana locally is to prepare and run the backedn, which will be the responsible of responding all your requests. To have a fast an easy way of prepare and install all of the necessary dependencies, we have chosen to use `uv`. `uv` is an extremely fast Python package installer and resolver, written in Rust, and designed as a drop-in replacement for pip and pip-tools workflows. To use it you only need to install `uv` [(How to install uv ?)](https://docs.astral.sh/uv/getting-started/installation/), change to `backend` directory and run the following command from the terminal:
+```bash
+  uv sync
+```
+After that, all the necessary dependencies will be installed (extremely fast, as we said before), and finally you only need to run:
+```bash
+uv run uvicorn --host 0.0.0.0 --port 8000 main:app
+```
+This will make the backend available in your computer in the `http://0.0.0.0:8000/` url. If you need help with the API methods, `http://0.0.0.0:8000/docs` will show you all the necessary documentation, including the posibility of running commands.
 
-`uv sync`
-
-After that, all the necessary dependencies will be installed (extremely fast, as we said before), and finally you only need to run `uv run uvicorn --host 0.0.0.0 --port 8000 main:app`. This will make the backend available in your computer in the `http://0.0.0.0:8000/` url. If you need help with the API methods, `http://0.0.0.0:8000/docs` will show you all the necessary documentation, including the posibility of running commands.
-
-However, if you are not ready to embrace the future just yet, we have also think in you. Inside the `backend` folder, we have left a `requirements.txt` file to install with classic `pip install -r requirements.txt` command. Finally, the command to run the backend will be `uvicorn --host 0.0.0.0 --port 8000 main:app`.
+However, if you are not ready to embrace the future just yet, we have also think in you. Inside the `backend` folder, we have left a `requirements.txt` file to install with classic command
+```bash
+pip install -r requirements.txt
+```
+Finally, the command to run the backend will be:
+```bash
+uvicorn --host 0.0.0.0 --port 8000 main:app
+```
 
 ### Wearvana frontend
 To run the Wearvana frontend locally, you'll need Node.js installed on your system. The frontend is built using modern web technologies including React, Vite, and Tailwind CSS for a fast and responsive user experience.
