@@ -15,6 +15,60 @@ import TypewriterPlaceholder from "../components/TypewriterPlaceholder";
 import AuthClient from "../services/AuthClient";
 import AuthContext from "../context/AuthProvider";
 
+const coats = [
+  "https://static.zara.net/assets/public/4b25/539e/98124491af29/8e2d9b8cd22c/07522043505-e1/07522043505-e1.jpg?ts=1739884066200&w=850",
+  "https://static.zara.net/assets/public/44ec/5e80/42c642dca4c8/95a11bb99a4c/03046037681-e1/03046037681-e1.jpg?ts=1738230460267&w=850",
+  "https://static.zara.net/assets/public/85d2/538c/452147f88559/59f0c1cb0f1b/03046067704-e1/03046067704-e1.jpg?ts=1737998230493&w=850",
+  "https://static.zara.net/assets/public/36a8/abbd/d9864d4e9b09/70481aba33f4/08372023800-e1/08372023800-e1.jpg?ts=1738841262076&w=850",
+  "https://static.zara.net/assets/public/516b/6d05/dd884a4a9a85/28a57ccf0dc2/06318032712-e1/06318032712-e1.jpg?ts=1736350984704&w=850",
+  "https://static.zara.net/assets/public/0850/9386/2c0c43388066/8c15bc98bb42/04341855675-e1/04341855675-e1.jpg?ts=1737474985492&w=850",
+];
+
+const trousers = [
+  "https://static.zara.net/assets/public/6e5a/a4d4/644c4811ace6/bc35701ed56f/03581041800-e1/03581041800-e1.jpg?ts=1730389565655&w=850",
+  "https://static.zara.net/assets/public/6cff/5361/a2734d20b5d8/f6101bfc90ee/06688220400-e1/06688220400-e1.jpg?ts=1722518584943&w=850",
+  "https://static.zara.net/assets/public/afe4/89b7/f2484bd8ae58/7ddd12a5613f/09632252407-e1/09632252407-e1.jpg?ts=1730627502960&w=850",
+  "https://static.zara.net/assets/public/4f57/e253/d05547ec802b/f7073d4facc2/00103011700-e1/00103011700-e1.jpg?ts=1738844073331&w=850",
+  "https://static.zara.net/assets/public/119d/55d1/622c4e68a862/64fdb5915d68/08727013400-e1/08727013400-e1.jpg?ts=1738668043592&w=850",
+];
+
+const shirts = [
+  "https://static.zara.net/assets/public/b2b6/4357/95af428f9242/6a4ef2dfb98e/04174318511-e1/04174318511-e1.jpg?ts=1739870817425&w=850",
+  "https://static.zara.net/assets/public/4cd0/54a4/c6e44e6ab784/856cbe946ee9/05644151671-e1/05644151671-e1.jpg?ts=1739984155919&w=850",
+  "https://static.zara.net/assets/public/bab2/4e1d/3a2b48498e62/de3cd9035dfe/05644154250-e1/05644154250-e1.jpg?ts=1738329956988&w=850",
+  "https://static.zara.net/assets/public/6aa7/84b8/d3dc4dd19321/1e8336e37191/00264174250-e2/00264174250-e2.jpg?ts=1738841007351&w=850",
+  "https://static.zara.net/assets/public/3f3d/dbe5/23a64b3383c7/89eba3726c71/04174378104-e1/04174378104-e1.jpg?ts=1738059280739&w=850",
+];
+
+const shoes = [
+  "https://static.zara.net/assets/public/65d0/4bd9/2d9d460dbb1f/f0da18dfa18a/12210410800-e2/12210410800-e2.jpg?ts=1737727246603&w=850",
+  "https://static.zara.net/assets/public/17cc/6fe1/34394a808d37/178ab3fff527/13550410800-e1/13550410800-e1.jpg?ts=1735576015724&w=850",
+  "https://static.zara.net/assets/public/775a/64d3/10e947729cde/af4eed2e62a8/12112410800-e1/12112410800-e1.jpg?ts=1729507714405&w=850",
+  "https://static.zara.net/assets/public/55a2/1006/27fc4697a342/4add59358f08/15402510025-e1/15402510025-e1.jpg?ts=1732015406217&w=850",
+  "https://static.zara.net/assets/public/3f49/f1dc/bc564b3e8ec2/f5407a803484/15412510500-e1/15412510500-e1.jpg?ts=1739782997089&w=850",
+];
+const general = [
+  "https://static.zara.net/assets/public/3fba/c469/61864877a1e8/9abd9a9edfc9/09967003051-000-e1/09967003051-000-e1.jpg?ts=1739868697024&w=850",
+];
+
+function getRandomImageUrl(category) {
+  const allImages = [...coats, ...trousers, ...shirts, ...shoes, ...general];
+
+  switch (category) {
+    case 1:
+      return coats[Math.floor(Math.random() * coats.length)];
+    case 2:
+      return trousers[Math.floor(Math.random() * trousers.length)];
+    case 3:
+      return shirts[Math.floor(Math.random() * shirts.length)];
+    case 4:
+      return shoes[Math.floor(Math.random() * shoes.length)];
+    case 5:
+    default:
+      return allImages[Math.floor(Math.random() * allImages.length)];
+  }
+}
+
 function ProductCard({
   image,
   name,
@@ -23,6 +77,7 @@ function ProductCard({
   link,
   brand,
   loading,
+  category,
 }) {
   if (loading) {
     return (
@@ -42,7 +97,11 @@ function ProductCard({
       className="flex flex-col group hover:shadow-lg transition-shadow duration-200 rounded-lg p-2"
     >
       <div className="aspect-[3/4] bg-wearvana-light rounded-lg mb-2 flex items-center justify-center">
-        <span className="text-wearvana-muted">No preview available</span>
+        <img
+          src={getRandomImageUrl(category)}
+          alt={name}
+          className="rounded-lg"
+        />
       </div>
       <h3 className="text-sm font-medium text-wearvana-primary line-clamp-1 group-hover:text-wearvana-accent transition-colors">
         {name}
@@ -90,7 +149,7 @@ export default function Explore() {
   const [inspirationResults, setInspirationResults] = useState([]);
   const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
   const { userID } = useContext(AuthContext);
-
+  const [category, setCategory] = useState(5);
   // Fixed dimensions for the photo
   const width = 720;
   let height = 0;
@@ -104,6 +163,86 @@ export default function Explore() {
     "Sudadera oversize gris...",
     "Camiseta para el gimnasio...",
   ];
+
+  const categoryKeywords = {
+    1: [
+      "chaqueta",
+      "abrigo",
+      "chamarra",
+      "cazadora",
+      "anorak",
+      "gabardina",
+      "trench",
+      "parka",
+      "impermeable",
+      "plumas",
+      "bomber",
+      "blazer",
+      "chaqueta" /* gl */,
+      "abrigo" /* gl */,
+      "jacket" /* en */,
+      "coat" /* en */,
+      "raincoat" /* en */,
+    ],
+    2: [
+      "pantalón",
+      "pantalones",
+      "jeans",
+      "vaquero",
+      "short",
+      "bermuda",
+      "chándal",
+      "leggins",
+      "joggers",
+      "cargo",
+      "mallas",
+      "capri",
+      "pantalóns" /* gl */,
+      "vaqueiros" /* gl */,
+      "trousers" /* en */,
+      "pants" /* en */,
+      "shorts" /* en */,
+    ],
+    3: [
+      "camiseta",
+      "playera",
+      "polo",
+      "blusa",
+      "top",
+      "crop top",
+      "jersey",
+      "suéter",
+      "chaleco",
+      "hoodie",
+      "sudadera",
+      "camisa",
+      "camisa" /* gl */,
+      "suadoiro" /* gl */,
+      "t-shirt" /* en */,
+      "shirt" /* en */,
+      "sweater" /* en */,
+      "hoodie" /* en */,
+    ],
+    4: [
+      "zapato",
+      "zapatos",
+      "tenis",
+      "botines",
+      "sandalia",
+      "zapatilla",
+      "mocasín",
+      "oxford",
+      "alpargata",
+      "chancla",
+      "sneaker",
+      "zapatilla" /* gl */,
+      "bota" /* gl */,
+      "shoe" /* en */,
+      "sneaker" /* en */,
+      "boots" /* en */,
+      "sandals" /* en */,
+    ],
+  };
 
   // Set random initial suggestion when component mounts
   useEffect(() => {
@@ -127,6 +266,18 @@ export default function Explore() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    // Find if any prestablished category fit into the query
+    let foundCategory = 5;
+    for (const [key, keywords] of Object.entries(categoryKeywords)) {
+      if (keywords.some((word) => searchQuery.toLowerCase().includes(word))) {
+        foundCategory = parseInt(key);
+        break;
+      }
+    }
+    setCategory(foundCategory);
+  }, [searchQuery]);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -205,7 +356,7 @@ export default function Explore() {
           facingMode: "environment",
           width: { ideal: 1080 },
           height: { ideal: 1080 },
-          aspectRatio: { ideal: 1 }
+          aspectRatio: { ideal: 1 },
         },
         audio: false,
       });
@@ -391,7 +542,9 @@ export default function Explore() {
                     <div className="absolute left-10 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                       {!searchQuery && (
                         <TypewriterPlaceholder
-                          suggestions={[searchSuggestions[currentSuggestionIndex]]}
+                          suggestions={[
+                            searchSuggestions[currentSuggestionIndex],
+                          ]}
                         />
                       )}
                     </div>
@@ -431,7 +584,10 @@ export default function Explore() {
                       <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                         <div className="text-white text-center px-4">
                           <p className="mb-4">{cameraError}</p>
-                          <button onClick={stopCamera} className="wearvana-button">
+                          <button
+                            onClick={stopCamera}
+                            className="wearvana-button"
+                          >
                             Cerrar
                           </button>
                         </div>
@@ -527,8 +683,14 @@ export default function Explore() {
                     Array(6)
                       .fill(null)
                       .map((_, i) => <ProductCard key={i} loading={true} />)
-                  ) : (activeTab === "search" ? searchResults : inspirationResults).length > 0 ? (
-                    (activeTab === "search" ? searchResults : inspirationResults).map((product, index) => (
+                  ) : (activeTab === "search"
+                      ? searchResults
+                      : inspirationResults
+                    ).length > 0 ? (
+                    (activeTab === "search"
+                      ? searchResults
+                      : inspirationResults
+                    ).map((product, index) => (
                       <ProductCard
                         key={index}
                         name={product.name}
@@ -537,6 +699,7 @@ export default function Explore() {
                         link={product.link}
                         brand={product.brand}
                         loading={false}
+                        category={category}
                       />
                     ))
                   ) : (
