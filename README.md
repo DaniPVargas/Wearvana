@@ -41,3 +41,7 @@ However, if you are not ready to embrace the future just yet, we have also think
 |                [playwright](https://playwright.dev/) | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)|
 |     [docker](https://www.docker.com/) |  [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) |
 | [Inkscape](https://inkscape.org/es/) | [MIT](https://opensource.org/licenses/MIT) |
+
+### Other licenses and references
+This project uses the API provided by INDITEX, subject to the terms and conditions found at [Terms and Conditions](https://developer.inditex.com/apimktplc/web/legal).
+
