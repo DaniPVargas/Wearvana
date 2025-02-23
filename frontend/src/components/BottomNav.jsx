@@ -1,9 +1,19 @@
-import { Home, Search, User, Settings, X, Upload, Image as ImageIcon, Camera } from 'lucide-react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useState, useEffect, useContext, useRef } from 'react';
-import authContext from '../context/AuthProvider';
-import UploadModal from './UploadModal';
-import AuthClient from '../services/AuthClient';
+import {
+  Home,
+  Search,
+  Telescope,
+  User,
+  Settings,
+  X,
+  Upload,
+  Image as ImageIcon,
+  Camera,
+} from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect, useContext, useRef } from "react";
+import authContext from "../context/AuthProvider";
+import UploadModal from "./UploadModal";
+import AuthClient from "../services/AuthClient";
 
 export default function BottomNav() {
   const location = useLocation();
@@ -23,16 +33,17 @@ export default function BottomNav() {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const canvasRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Add scroll lock effect
   useEffect(() => {
     if (showSettingsModal) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     }
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, [showSettingsModal]);
 
@@ -70,24 +81,36 @@ export default function BottomNav() {
 
     setNewProfileImage(file);
     setNewProfileImagePreview(URL.createObjectURL(file));
+    setShowPhotoUploadModal(false);
   };
 
   const handleSaveProfile = async () => {
     try {
       const authClientInstance = new AuthClient();
-      
+
       // If there's a new profile image, upload it first
       let profilePictureUrl = user.profile_picture_url;
       if (newProfileImage) {
-        profilePictureUrl = await authClientInstance.uploadImage(newProfileImage, userID);
+        profilePictureUrl = await authClientInstance.uploadImage(
+          newProfileImage,
+          userID
+        );
       }
 
-      // Update user profile
-      await authClientInstance.updateUser(userID, newDescription, profilePictureUrl);
+      // Update user profile with all required fields
+      await authClientInstance.updateUser(
+        userID,
+        user.complete_name, // Keep existing complete_name
+        newDescription,
+        profilePictureUrl
+      );
 
       // Refresh user data
       const userData = await authClientInstance.getUser(userID);
       setUser(userData);
+
+      // Dispatch event to notify profile update
+      window.dispatchEvent(new CustomEvent("profileUpdated"));
 
       // Close modals and reset states
       setShowEditProfileModal(false);
@@ -105,39 +128,44 @@ export default function BottomNav() {
       setShowCamera(true);
       setShowPhotoUploadModal(false);
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: 'environment',
+          facingMode: "environment",
           width: { ideal: 720 },
           height: { ideal: 1280 },
-          aspectRatio: { ideal: 9/16 }
+          aspectRatio: { ideal: 9 / 16 },
         },
-        audio: false
+        audio: false,
       });
-      
+
       if (!videoRef.current) {
-        throw new Error('Video element not found');
+        throw new Error("Video element not found");
       }
 
       videoRef.current.srcObject = stream;
       streamRef.current = stream;
-      
-      videoRef.current.addEventListener('canplay', function handleCanPlay() {
-        videoRef.current.removeEventListener('canplay', handleCanPlay);
-        videoRef.current.play()
+
+      videoRef.current.addEventListener("canplay", function handleCanPlay() {
+        videoRef.current.removeEventListener("canplay", handleCanPlay);
+        videoRef.current
+          .play()
           .then(() => {
             setCameraError(null);
           })
-          .catch(err => {
-            console.error('Error playing video:', err);
-            setCameraError('Error al iniciar la cámara. Por favor, recarga la página.');
+          .catch((err) => {
+            console.error("Error playing video:", err);
+            setCameraError(
+              "Error al iniciar la cámara. Por favor, recarga la página."
+            );
           });
       });
     } catch (err) {
-      console.error('Error accessing camera:', err);
-      setCameraError('No se pudo acceder a la cámara. Por favor, permite el acceso.');
+      console.error("Error accessing camera:", err);
+      setCameraError(
+        "No se pudo acceder a la cámara. Por favor, permite el acceso."
+      );
       setShowCamera(false);
     }
   };
@@ -145,39 +173,45 @@ export default function BottomNav() {
   const capturePhoto = () => {
     try {
       if (!videoRef.current || !canvasRef.current) {
-        console.error('Video or canvas element not found');
+        console.error("Video or canvas element not found");
         return;
       }
 
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      
+
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
 
       const context = canvas.getContext("2d");
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          console.error('Failed to capture photo');
-          return;
-        }
+      canvas.toBlob(
+        async (blob) => {
+          if (!blob) {
+            console.error("Failed to capture photo");
+            return;
+          }
 
-        const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
-        setNewProfileImage(file);
-        setNewProfileImagePreview(URL.createObjectURL(blob));
-        stopCamera();
-      }, 'image/jpeg', 0.8);
+          const file = new File([blob], "photo.jpg", { type: "image/jpeg" });
+          setNewProfileImage(file);
+          setNewProfileImagePreview(URL.createObjectURL(blob));
+          stopCamera();
+        },
+        "image/jpeg",
+        0.8
+      );
     } catch (error) {
-      console.error('Error capturing photo:', error);
-      setCameraError('Error al capturar la foto. Por favor, inténtalo de nuevo.');
+      console.error("Error capturing photo:", error);
+      setCameraError(
+        "Error al capturar la foto. Por favor, inténtalo de nuevo."
+      );
     }
   };
 
   const stopCamera = () => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
     if (videoRef.current) {
@@ -188,13 +222,13 @@ export default function BottomNav() {
 
   const handleImageUpload = (e) => {
     e.preventDefault();
-    fileInputRef.current?.click();
+    profileImageInputRef.current?.click();
   };
 
   const navItems = [
-    { icon: Home, label: 'Inicio', path: '/' },
-    { icon: Search, label: 'Explorar', path: '/explore' },
-    { icon: User, label: 'Perfil', path: '/profile' },
+    { icon: Home, label: "Inicio", path: "/" },
+    { icon: Telescope, label: "Explorar", path: "/explore" },
+    { icon: User, label: "Perfil", path: "/profile" },
   ];
 
   return (
@@ -211,11 +245,15 @@ export default function BottomNav() {
                   to={path}
                   className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-colors ${
                     isActive
-                      ? 'text-wearvana-accent'
-                      : 'text-wearvana-muted hover:text-wearvana-accent'
+                      ? "text-wearvana-accent"
+                      : "text-wearvana-muted hover:text-wearvana-accent"
                   }`}
                 >
-                  <Icon className={`h-6 w-6 ${isActive ? 'stroke-2' : 'stroke-1.5'}`} />
+                  <Icon
+                    className={`h-6 w-6 ${
+                      isActive ? "stroke-2" : "stroke-1.5"
+                    }`}
+                  />
                   <span className="text-xs font-medium">{label}</span>
                 </Link>
               );
@@ -238,11 +276,13 @@ export default function BottomNav() {
                 to={path}
                 className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-colors ${
                   isActive
-                    ? 'text-wearvana-accent font-medium'
-                    : 'text-wearvana-primary hover:bg-gray-50'
+                    ? "text-wearvana-accent font-medium"
+                    : "text-wearvana-primary hover:bg-gray-50"
                 }`}
               >
-                <Icon className={`h-6 w-6 ${isActive ? 'stroke-2' : 'stroke-1.5'}`} />
+                <Icon
+                  className={`h-6 w-6 ${isActive ? "stroke-2" : "stroke-1.5"}`}
+                />
                 <span className="text-base">{label}</span>
               </Link>
             );
@@ -267,7 +307,7 @@ export default function BottomNav() {
 
       {/* Settings Modal */}
       {showSettingsModal && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
@@ -278,7 +318,7 @@ export default function BottomNav() {
           <div className="bg-white w-full max-w-sm rounded-xl overflow-hidden">
             <div className="border-b border-gray-200 p-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Axustes</h2>
-              <button 
+              <button
                 onClick={() => setShowSettingsModal(false)}
                 className="text-gray-500 hover:text-gray-700"
               >
@@ -286,7 +326,7 @@ export default function BottomNav() {
               </button>
             </div>
             <div className="p-4 space-y-3">
-              <button 
+              <button
                 className="w-full flex items-center justify-center px-4 py-3 wearvana-button"
                 onClick={() => {
                   setShowEditProfileModal(true);
@@ -294,15 +334,15 @@ export default function BottomNav() {
               >
                 <span>Editar perfil</span>
               </button>
-              <button 
+              <button
                 className="w-full flex items-center justify-center px-4 py-3 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
                 onClick={() => {
-                  localStorage.removeItem('jwt');
-                  localStorage.removeItem('userID');
+                  localStorage.removeItem("jwt");
+                  localStorage.removeItem("userID");
                   setAuth("");
                   setUserID("");
                   setShowSettingsModal(false);
-                  navigate('/login');
+                  navigate("/login");
                 }}
               >
                 <span>Pechar sesión</span>
@@ -447,10 +487,7 @@ export default function BottomNav() {
               <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                 <div className="text-white text-center px-4">
                   <p className="mb-4">{cameraError}</p>
-                  <button
-                    onClick={stopCamera}
-                    className="wearvana-button"
-                  >
+                  <button onClick={stopCamera} className="wearvana-button">
                     Cerrar
                   </button>
                 </div>
@@ -489,7 +526,10 @@ export default function BottomNav() {
       <canvas ref={canvasRef} className="hidden" />
 
       {/* Upload Modal */}
-      <UploadModal isOpen={showUploadModal} onClose={() => setShowUploadModal(false)} />
+      <UploadModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+      />
     </>
   );
-} 
+}

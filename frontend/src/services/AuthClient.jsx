@@ -23,7 +23,7 @@ export default class AuthClient {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        completeName: fullName,
+        complete_name: fullName,
         user_alias: alias,
         description: description,
         profile_picture_url: profilePictureUrl,
@@ -36,13 +36,14 @@ export default class AuthClient {
     return await response.json();
   }
 
-  async updateUser(userID, description, profilePictureUrl) {
+  async updateUser(userID, fullName, description, profilePictureUrl) {
     const response = await fetch(`${this.apiBaseUrl}/users/${userID}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        complete_name: fullName,
         description: description,
         profile_picture_url: profilePictureUrl,
       }),
@@ -128,6 +129,7 @@ export default class AuthClient {
   }
 
   async publicatePost(userID, image, title, tags) {
+    const image_url = await this.uploadImage(image, userID);
     const response = await fetch(`${this.apiBaseUrl}/users/${userID}/posts`, {
       method: "POST",
       headers: {
@@ -135,12 +137,18 @@ export default class AuthClient {
       },
       body: JSON.stringify({
         title: title,
-        image_url: image,
+        image_url: image_url,
         tags: tags,
       }),
     });
 
     if (!response.ok) throw new Error("Erro ao publicar o post");
     return;
+  }
+
+  async getUsers() {
+    const response = await fetch(`${this.apiBaseUrl}/users`);
+    if (!response.ok) throw new Error("Erro ao obter os usuarios");
+    return await response.json();
   }
 }

@@ -1,10 +1,32 @@
 import { createContext, useState, useEffect } from "react";
+import AuthClient from "../services/AuthClient";
 
 const AuthContext = createContext({});
 
-export const AuthProvider = ({ children }) => {
+export const AuthProvider = ({ children, navigate }) => {
   const [auth, setAuth] = useState(() => localStorage.getItem('jwt') || "");
   const [userID, setUserID] = useState(() => localStorage.getItem('userID') || "");
+
+  useEffect(() => {
+    const validateUser = async () => {
+      if (userID) {
+        try {
+          const authClientInstance = new AuthClient();
+          await authClientInstance.getUser(userID);
+        } catch (error) {
+          console.error("Error validating user:", error);
+          // Clear auth data and redirect to login
+          localStorage.removeItem('jwt');
+          localStorage.removeItem('userID');
+          setAuth("");
+          setUserID("");
+          navigate('/login');
+        }
+      }
+    };
+
+    validateUser();
+  }, [userID, navigate]);
 
   useEffect(() => {
     if (auth) {

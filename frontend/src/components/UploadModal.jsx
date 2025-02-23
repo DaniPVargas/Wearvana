@@ -1,5 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
-import { Camera, Image, X, Plus, Link as LinkIcon, Send } from 'lucide-react';
+import { useContext, useState, useRef, useEffect } from "react";
+import { Camera, Image, X, Plus, Link as LinkIcon, Send } from "lucide-react";
+import AuthClient from "../services/AuthClient";
+import authContext from "../context/AuthProvider";
 
 export default function UploadModal({ isOpen, onClose }) {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -10,26 +12,27 @@ export default function UploadModal({ isOpen, onClose }) {
   const [productTags, setProductTags] = useState([]);
   const [tagPosition, setTagPosition] = useState({ x: 0, y: 0 });
   const [currentTag, setCurrentTag] = useState(null);
-  const [title, setTitle] = useState('');
-  
+  const [title, setTitle] = useState("");
+
+  const { userID } = useContext(authContext);
+
   const fileInputRef = useRef(null);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const canvasRef = useRef(null);
   const imageRef = useRef(null);
 
-  const [isCapturingProduct, setIsCapturingProduct] = useState(false);
-  const [productUrl, setProductUrl] = useState('');
+  const [draggingTag, setDraggingTag] = useState(null);
 
   // Add scroll lock effect
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     }
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, [isOpen]);
 
@@ -42,13 +45,13 @@ export default function UploadModal({ isOpen, onClose }) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      alert('Por favor, selecciona una imagen.');
+    if (!file.type.startsWith("image/")) {
+      alert("Por favor, selecciona una imagen.");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('La imagen no puede superar los 5MB.');
+      alert("La imagen no puede superar los 5MB.");
       return;
     }
 
@@ -60,40 +63,45 @@ export default function UploadModal({ isOpen, onClose }) {
   const startCamera = async () => {
     try {
       setShowCamera(true);
-      
-      await new Promise(resolve => setTimeout(resolve, 100));
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: 'environment',
-          width: { ideal: 720 },
-          height: { ideal: 1280 },
-          aspectRatio: { ideal: 9/16 }
+          facingMode: "environment",
+          width: { ideal: 1080 },
+          height: { ideal: 1080 },
+          aspectRatio: { ideal: 1 },
         },
-        audio: false
+        audio: false,
       });
-      
+
       if (!videoRef.current) {
-        throw new Error('Video element not found');
+        throw new Error("Video element not found");
       }
 
       videoRef.current.srcObject = stream;
       streamRef.current = stream;
-      
-      videoRef.current.addEventListener('canplay', function handleCanPlay() {
-        videoRef.current.removeEventListener('canplay', handleCanPlay);
-        videoRef.current.play()
+
+      videoRef.current.addEventListener("canplay", function handleCanPlay() {
+        videoRef.current.removeEventListener("canplay", handleCanPlay);
+        videoRef.current
+          .play()
           .then(() => {
             setCameraError(null);
           })
-          .catch(err => {
-            console.error('Error playing video:', err);
-            setCameraError('Error al iniciar la cámara. Por favor, recarga la página.');
+          .catch((err) => {
+            console.error("Error playing video:", err);
+            setCameraError(
+              "Error al iniciar la cámara. Por favor, recarga la página."
+            );
           });
       });
     } catch (err) {
-      console.error('Error accessing camera:', err);
-      setCameraError('No se pudo acceder a la cámara. Por favor, permite el acceso.');
+      console.error("Error accessing camera:", err);
+      setCameraError(
+        "No se pudo acceder a la cámara. Por favor, permite el acceso."
+      );
       setShowCamera(false);
     }
   };
@@ -101,39 +109,45 @@ export default function UploadModal({ isOpen, onClose }) {
   const capturePhoto = () => {
     try {
       if (!videoRef.current || !canvasRef.current) {
-        console.error('Video or canvas element not found');
+        console.error("Video or canvas element not found");
         return;
       }
 
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      
+
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
 
       const context = canvas.getContext("2d");
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          console.error('Failed to capture photo');
-          return;
-        }
+      canvas.toBlob(
+        async (blob) => {
+          if (!blob) {
+            console.error("Failed to capture photo");
+            return;
+          }
 
-        const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
-        setSelectedImage(file);
-        setPreviewUrl(URL.createObjectURL(blob));
-        stopCamera();
-      }, 'image/jpeg', 0.8);
+          const file = new File([blob], "photo.jpg", { type: "image/jpeg" });
+          setSelectedImage(file);
+          setPreviewUrl(URL.createObjectURL(blob));
+          stopCamera();
+        },
+        "image/jpeg",
+        0.8
+      );
     } catch (error) {
-      console.error('Error capturing photo:', error);
-      setCameraError('Error al capturar la foto. Por favor, inténtalo de nuevo.');
+      console.error("Error capturing photo:", error);
+      setCameraError(
+        "Error al capturar la foto. Por favor, inténtalo de nuevo."
+      );
     }
   };
 
   const stopCamera = () => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
     if (videoRef.current) {
@@ -146,31 +160,46 @@ export default function UploadModal({ isOpen, onClose }) {
     if (!imageRef.current || !showTagModal) return;
 
     const rect = imageRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    
+    const naturalWidth = imageRef.current.naturalWidth;
+    const min_image_x = ((rect.width - naturalWidth) / 2 / rect.width) * 100;
+    const max_image_x = 100 - min_image_x;
+    const x = Math.min(
+      max_image_x,
+      Math.max(min_image_x, ((e.clientX - rect.left) / rect.width) * 100)
+    );
+    const y = Math.min(
+      max_image_x,
+      Math.max(min_image_x, ((e.clientY - rect.top) / rect.height) * 100)
+    );
+
     setTagPosition({ x, y });
-    setCurrentTag('new');
+    setCurrentTag("new");
   };
 
   const handleAddTag = (tag) => {
-    if (currentTag === 'new') {
-      setProductTags(tags => [...tags, { ...tag, position: tagPosition }]);
-    } else if (typeof currentTag === 'number') {
-      setProductTags(tags => 
-        tags.map((t, i) => i === currentTag ? { ...t, ...tag } : t)
+    if (currentTag === "new") {
+      setProductTags((tags) => [
+        ...tags,
+        { ...tag, x_coord: tagPosition.x, y_coord: tagPosition.y },
+      ]);
+    } else if (typeof currentTag === "number") {
+      setProductTags((tags) =>
+        tags.map((t, i) => (i === currentTag ? { ...t, ...tag } : t))
       );
     }
     setCurrentTag(null);
   };
 
   const handleRemoveTag = (index) => {
-    setProductTags(tags => tags.filter((_, i) => i !== index));
+    setProductTags((tags) => tags.filter((_, i) => i !== index));
   };
 
   const handleEditTag = (index) => {
     setCurrentTag(index);
-    setTagPosition(productTags[index].position);
+    setTagPosition({
+      x: productTags[index].x_coord,
+      y: productTags[index].y_coord,
+    });
     setShowTagModal(true);
   };
 
@@ -178,15 +207,76 @@ export default function UploadModal({ isOpen, onClose }) {
     setSelectedImage(null);
     setPreviewUrl(null);
     setProductTags([]);
-    setTitle('');
+    setTitle("");
     stopCamera();
     onClose();
+  };
+
+  const publishPost = async ({ image, title, tags }) => {
+    const authClientInstance = new AuthClient();
+    const response = await authClientInstance.publicatePost(
+      userID,
+      image,
+      title,
+      tags
+    );
+  };
+
+  const handleDragStart = (index) => (e) => {
+    setDraggingTag(index);
+  };
+
+  const handleDrag = (e) => {
+    if (draggingTag === null || !imageRef.current) return;
+
+    const rect = imageRef.current.getBoundingClientRect();
+    const naturalWidth = imageRef.current.naturalWidth;
+    const min_image_x = ((rect.width - naturalWidth) / 2 / rect.width) * 100;
+    const max_image_x = 100 - min_image_x;
+    const x = Math.min(
+      max_image_x,
+      Math.max(min_image_x, ((e.clientX - rect.left) / rect.width) * 100)
+    );
+    const y = Math.min(
+      max_image_x,
+      Math.max(min_image_x, ((e.clientY - rect.top) / rect.height) * 100)
+    );
+
+    setProductTags((tags) =>
+      tags.map((tag, i) =>
+        i === draggingTag ? { ...tag, x_coord: x, y_coord: y } : tag
+      )
+    );
+  };
+
+  const handleDragEnd = (e) => {
+    if (draggingTag === null || !imageRef.current) return;
+
+    const rect = imageRef.current.getBoundingClientRect();
+    const naturalWidth = imageRef.current.naturalWidth;
+    const min_image_x = ((rect.width - naturalWidth) / 2 / rect.width) * 100;
+    const max_image_x = 100 - min_image_x;
+    const x = Math.min(
+      max_image_x,
+      Math.max(min_image_x, ((e.clientX - rect.left) / rect.width) * 100)
+    );
+    const y = Math.min(
+      max_image_x,
+      Math.max(min_image_x, ((e.clientY - rect.top) / rect.height) * 100)
+    );
+
+    setProductTags((tags) =>
+      tags.map((tag, i) =>
+        i === draggingTag ? { ...tag, x_coord: x, y_coord: y } : tag
+      )
+    );
+    setDraggingTag(null);
   };
 
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
@@ -198,7 +288,7 @@ export default function UploadModal({ isOpen, onClose }) {
         {/* Modal Header */}
         <div className="border-b border-gray-200 p-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Nova publicación</h2>
-          <button 
+          <button
             onClick={handleClose}
             className="text-gray-500 hover:text-gray-700"
           >
@@ -210,14 +300,14 @@ export default function UploadModal({ isOpen, onClose }) {
         <div className="p-4">
           {!selectedImage ? (
             <div className="space-y-4">
-              <button 
+              <button
                 onClick={startCamera}
                 className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
               >
                 <Camera className="h-5 w-5" />
                 <span>Hacer foto</span>
               </button>
-              <button 
+              <button
                 onClick={handleImageUpload}
                 className="wearvana-button w-full flex items-center justify-center gap-2 py-3 !bg-white !text-black border border-gray-200"
               >
@@ -241,7 +331,7 @@ export default function UploadModal({ isOpen, onClose }) {
                   alt="Preview"
                   className="w-full aspect-square object-cover rounded-lg"
                   onClick={handleImageClick}
-                  style={{ cursor: showTagModal ? 'crosshair' : 'default' }}
+                  style={{ cursor: showTagModal ? "crosshair" : "default" }}
                 />
                 {/* Product Tags */}
                 {productTags.map((tag, index) => (
@@ -249,17 +339,24 @@ export default function UploadModal({ isOpen, onClose }) {
                     key={index}
                     onClick={() => handleEditTag(index)}
                     className="absolute w-6 h-6 -ml-3 -mt-3 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
-                    style={{ 
-                      left: `${tag.position.x}%`,
-                      top: `${tag.position.y}%`
+                    style={{
+                      left: `${tag.x_coord}%`,
+                      top: `${tag.y_coord}%`,
                     }}
+                    draggable
+                    onDragStart={handleDragStart(index)}
+                    onDrag={handleDrag}
+                    onDragEnd={handleDragEnd}
                   >
                     <Plus className="h-4 w-4" />
                   </button>
                 ))}
               </div>
               <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="title"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Título da publicación
                 </label>
                 <input
@@ -267,28 +364,33 @@ export default function UploadModal({ isOpen, onClose }) {
                   id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Escribe un título para tu publicación..."
+                  placeholder="Escribe un título para a túa publicación..."
                   className="wearvana-input w-full"
                 />
               </div>
-              <button 
-                className={`wearvana-button w-full flex items-center justify-center gap-2 py-3 ${showTagModal ? '!bg-wearvana-accent/10 !text-wearvana-accent' : ''}`}
+              <button
+                className={`wearvana-button w-full flex items-center justify-center gap-2 py-3 ${
+                  showTagModal
+                    ? "!bg-wearvana-accent/10 !text-wearvana-accent"
+                    : ""
+                }`}
                 onClick={() => setShowTagModal(!showTagModal)}
               >
                 <LinkIcon className="h-5 w-5" />
                 <span>
-                  {showTagModal && !currentTag ? 'Selecciona la prenda' : 'Etiquetar productos'}
+                  {showTagModal && !currentTag
+                    ? "Selecciona la prenda"
+                    : "Etiquetar productos"}
                 </span>
               </button>
               {productTags.length > 0 && title.trim() && (
-                <button 
+                <button
                   className="wearvana-button w-full flex items-center justify-center gap-2 py-3"
                   onClick={() => {
-                    // TODO: Implement post creation
-                    console.log('Creating post with:', {
+                    publishPost({
                       image: selectedImage,
-                      title: title,
-                      tags: productTags
+                      title,
+                      tags: productTags,
                     });
                     handleClose();
                   }}
@@ -304,7 +406,7 @@ export default function UploadModal({ isOpen, onClose }) {
 
       {/* Tag Modal */}
       {showTagModal && currentTag !== null && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-[80] flex items-center justify-center p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
@@ -314,53 +416,75 @@ export default function UploadModal({ isOpen, onClose }) {
         >
           <div className="bg-white w-full max-w-sm rounded-xl p-6">
             <h3 className="text-lg font-semibold mb-4">
-              {typeof currentTag === 'number' ? 'Editar producto' : 'Detalles del producto'}
+              {typeof currentTag === "number"
+                ? "Editar producto"
+                : "Detalles del producto"}
             </h3>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 handleAddTag({
-                  name: formData.get('name'),
-                  price: formData.get('price'),
-                  link: formData.get('link'),
+                  clothing_name: formData.get("name"),
+                  current_price: formData.get("price"),
+                  original_price: null,
+                  link: formData.get("link"),
+                  brand: "Zara",
                 });
               }}
               className="space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium mb-1">Nombre del producto</label>
+                <label className="block text-sm font-medium mb-1">
+                  Nombre del producto
+                </label>
                 <input
                   type="text"
                   name="name"
                   className="wearvana-input"
                   required
-                  defaultValue={currentTag !== null && typeof currentTag === 'number' ? productTags[currentTag].name : ''}
+                  defaultValue={
+                    currentTag !== null && typeof currentTag === "number"
+                      ? productTags[currentTag].name
+                      : ""
+                  }
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Precio (€)</label>
+                <label className="block text-sm font-medium mb-1">
+                  Precio (€)
+                </label>
                 <input
                   type="number"
                   name="price"
                   step="0.01"
                   className="wearvana-input"
                   required
-                  defaultValue={currentTag !== null && typeof currentTag === 'number' ? productTags[currentTag].price : ''}
+                  defaultValue={
+                    currentTag !== null && typeof currentTag === "number"
+                      ? productTags[currentTag].price
+                      : ""
+                  }
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Enlace del producto</label>
+                <label className="block text-sm font-medium mb-1">
+                  Enlace del producto
+                </label>
                 <input
                   type="url"
                   name="link"
                   className="wearvana-input"
                   required
-                  defaultValue={currentTag !== null && typeof currentTag === 'number' ? productTags[currentTag].link : ''}
+                  defaultValue={
+                    currentTag !== null && typeof currentTag === "number"
+                      ? productTags[currentTag].link
+                      : ""
+                  }
                 />
               </div>
               <div className="flex gap-2 pt-2">
-                {typeof currentTag === 'number' && (
+                {typeof currentTag === "number" && (
                   <button
                     type="button"
                     onClick={() => {
@@ -379,10 +503,7 @@ export default function UploadModal({ isOpen, onClose }) {
                 >
                   Cancelar
                 </button>
-                <button
-                  type="submit"
-                  className="flex-1 wearvana-button"
-                >
+                <button type="submit" className="flex-1 wearvana-button">
                   Guardar
                 </button>
               </div>
@@ -393,8 +514,8 @@ export default function UploadModal({ isOpen, onClose }) {
 
       {/* Camera View */}
       {showCamera && (
-        <div className="fixed inset-0 bg-black z-[80]">
-          <div className="relative h-full">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[80] flex items-center justify-center">
+          <div className="relative w-full max-w-md aspect-square bg-black rounded-xl overflow-hidden m-4">
             <video
               ref={videoRef}
               autoPlay
@@ -406,20 +527,36 @@ export default function UploadModal({ isOpen, onClose }) {
               <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                 <div className="text-white text-center px-4">
                   <p className="mb-4">{cameraError}</p>
-                  <button
-                    onClick={stopCamera}
-                    className="wearvana-button"
-                  >
+                  <button onClick={stopCamera} className="wearvana-button">
                     Cerrar
                   </button>
                 </div>
               </div>
             ) : (
               <div className="absolute bottom-0 inset-x-0 p-4 flex justify-center">
-                <button
-                  onClick={capturePhoto}
-                  className="w-16 h-16 rounded-full border-4 border-white"
-                />
+                <div className="w-full px-10 flex items-center">
+                  <button
+                    onClick={stopCamera}
+                    className="p-3 bg-white/90 rounded-full text-black shadow-lg hover:bg-white"
+                    style={{ backdropFilter: "blur(4px)" }}
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                  <div className="flex-grow flex justify-center">
+                    <button
+                      onClick={capturePhoto}
+                      className="p-2 bg-white/90 rounded-full shadow-lg hover:bg-white transform active:scale-95 transition-transform"
+                      style={{
+                        width: "64px",
+                        height: "64px",
+                        backdropFilter: "blur(4px)",
+                      }}
+                    >
+                      <div className="w-full h-full rounded-full border-4 border-black/20" />
+                    </button>
+                  </div>
+                  <div className="w-[44px]" />
+                </div>
               </div>
             )}
           </div>
@@ -430,4 +567,4 @@ export default function UploadModal({ isOpen, onClose }) {
       <canvas ref={canvasRef} className="hidden" />
     </div>
   );
-} 
+}
