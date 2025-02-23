@@ -24,4 +24,20 @@ However, if you are not ready to embrace the future just yet, we have also think
 ## Deploying Wearvana
 
 
-## Licenses
+## Licenses used in the project
+| **Library or Framework** | **License** |
+|:------------------------:|:-----------:|
+|           [Vite](https://vite.dev/)           |     [MIT](https://opensource.org/license/mit)     |
+|           [React](https://es.react.dev/)          |     [MIT](https://opensource.org/license/mit)     |
+|       [React-Router](https://reactrouter.com/)       |     [MIT](https://opensource.org/license/mit)     |
+|         [React-DOM](https://legacy.reactjs.org/docs/react-dom.html)        |     [MIT](https://opensource.org/license/mit)     |
+|          [FastAPI](https://fastapi.tiangolo.com/)         |     [MIT](https://opensource.org/license/mit)     |
+|              [SQLite](https://www.sqlite.org/)            |      [MIT](https://opensource.org/license/mit)       |
+|                [Pydantic](https://docs.pydantic.dev/latest/)          |       [MIT](https://opensource.org/license/mit)      |
+|                [AIOHTTP](https://docs.aiohttp.org/en/stable/) | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) |
+|                [uv](https://astral.sh/blog/uv)          |       [MIT](https://opensource.org/license/mit)      |
+|                [uvicorn](https://www.uvicorn.org/) | [BSD-3](https://opensource.org/license/bsd-3-clause) |
+|     [passwordless](https://passwordless.dev) |  [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) |
+|                [playwright](https://playwright.dev/) | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)|
+|     [docker](https://www.docker.com/) |  [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) |
+| [Inkscape](https://inkscape.org/es/) | [MIT](https://opensource.org/licenses/MIT) |
