@@ -24,6 +24,7 @@ class Post(BaseModel):
 
 class User(BaseModel):
     user_id: str
+    complete_name: str
     user_alias: str
     description: str
     profile_picture_url: Optional[str] = None
@@ -32,6 +33,7 @@ class AuthBody(BaseModel):
     token: str
 
 class CreateUserBody(BaseModel):
+    complete_name: str
     user_alias: str
     description: Optional[str] = None
     profile_picture_url: Optional[str] = None
@@ -45,5 +47,6 @@ class UploadPostBody(BaseModel):
     tags: list[Tag]
 
 class UpdateUserBody(BaseModel):
+    complete_name: Optional[str] = None
     description: Optional[str] = None
     profile_picture_url: Optional[str] = None

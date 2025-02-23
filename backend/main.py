@@ -68,6 +68,7 @@ def init_db(settings):
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             user_id TEXT PRIMARY KEY,
+            complete_name TEXT NOT NULL,
             user_alias TEXT NOT NULL,
             description TEXT,
             profile_picture_url TEXT
@@ -151,14 +152,15 @@ def create_user(create_user_body: CreateUserBody) -> str:
 
     user_id = str(uuid.uuid4())
 
+    complete_name = create_user_body.complete_name
     user_alias = create_user_body.user_alias
     description = create_user_body.description
     profile_picture_url = create_user_body.profile_picture_url
 
     try:
         cursor.execute(
-            "INSERT INTO users (user_id, user_alias, description, profile_picture_url) VALUES (?, ?, ?, ?)",
-            (user_id, user_alias, description, profile_picture_url),
+            "INSERT INTO users (user_id, complete_name, user_alias, description, profile_picture_url) VALUES (?, ?, ?, ?, ?)",
+            (user_id, complete_name, user_alias, description, profile_picture_url),
         )
         conn.commit()
     except sqlite3.IntegrityError:
@@ -183,14 +185,14 @@ def get_users() -> list[User]:
     users = cursor.fetchall()
     conn.close()
 
-    return [{"user_id": user[0], "user_alias": user[1], "description": user[2], "profile_picture_url": user[3]} for user in users]
+    return [{"user_id": user[0], "complete_name": user[1], "user_alias": user[2], "description": user[3], "profile_picture_url": user[4]} for user in users]
 
 
 @app.get("/users/{user_id}")
 async def get_user_info(user_id: str) -> User:
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT user_id, user_alias, description, profile_picture_url FROM users WHERE user_id = ?", (user_id,))
+    cursor.execute("SELECT user_id, complete_name, user_alias, description, profile_picture_url FROM users WHERE user_id = ?", (user_id,))
     user = cursor.fetchone()
 
     conn.close()
@@ -198,7 +200,8 @@ async def get_user_info(user_id: str) -> User:
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     else:
-        result = {"user_id": user[0], "user_alias": user[1], "description": user[2], "profile_picture_url": user[3]}
+        print(dict(user))
+        result = {"user_id": user[0], "complete_name": user[1], "user_alias": user[2], "description": user[3], "profile_picture_url": user[4]}
         return result
 
 @app.patch("/users/{user_id}")
@@ -206,10 +209,11 @@ async def update_user_info(user_id: str, update_user_body: UpdateUserBody) -> di
     conn = get_db()
     cursor = conn.cursor()
 
+    complete_name = update_user_body.complete_name
     description = update_user_body.description
     profile_picture_url = update_user_body.profile_picture_url
 
-    cursor.execute("UPDATE users SET description = ?, profile_picture_url = ? WHERE user_id = ?", (description, profile_picture_url, user_id))
+    cursor.execute("UPDATE users SET complete_name = ?, description = ?, profile_picture_url = ? WHERE user_id = ?", (complete_name, description, profile_picture_url, user_id))
     conn.commit()
 
     conn.close()
