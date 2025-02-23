@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Wearvana
+# SPDX-License-Identifier: MIT
+
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse

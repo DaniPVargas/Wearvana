@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Wearvana
+# SPDX-License-Identifier: MIT
+
 from pydantic import BaseModel
 from typing import Optional
 
