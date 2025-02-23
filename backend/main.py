@@ -393,7 +393,7 @@ def upload_picture(user_id: str, file: UploadFile = File(...)) -> dict[str, str]
 
     picture_id = str(uuid.uuid4())    
 
-    temp_path = f"/temp/image_temp"
+    temp_path = f"/tmp/image_temp"
 
     with open(temp_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
